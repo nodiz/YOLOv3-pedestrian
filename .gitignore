@@ -10,3 +10,5 @@ backup
 weights/*.weights
 __pycache__
 checkpoints
+
+.idea/
