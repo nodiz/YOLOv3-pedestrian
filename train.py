@@ -36,13 +36,15 @@ if __name__ == "__main__":
     parser.add_argument("--evaluation_interval", type=int, default=1, help="interval evaluations on validation set")
     parser.add_argument("--compute_map", default=False, help="if True computes mAP every tenth batch")
     parser.add_argument("--multiscale_training", default=True, help="allow for multi-scale training")
+    parser.add_argument("--town", type=str, default="", help="town to train on")
     opt = parser.parse_args()
     print(opt)
 
     logger = Logger("logs")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache() # free some elves!
     os.makedirs("output", exist_ok=True)
     os.makedirs("checkpoints", exist_ok=True)
 
@@ -53,6 +55,8 @@ if __name__ == "__main__":
     # for ECP
     train_path = "train"
     valid_path = "val"
+
+    town = opt.town
 
     class_names = load_classes(data_config["names"])
 
@@ -68,7 +72,7 @@ if __name__ == "__main__":
             model.load_darknet_weights(opt.pretrained_weights)
 
     # Get dataloader
-    dataset = ListDataset(train_path, augment=True, multiscale=opt.multiscale_training)
+    dataset = ListDataset(train_path, augment=True, multiscale=opt.multiscale_training, town=town)
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=opt.batch_size,
@@ -161,6 +165,7 @@ if __name__ == "__main__":
                 nms_thres=0.5,
                 img_size=opt.img_size,
                 batch_size=8,
+                town=town
             )
             evaluation_metrics = [
                 ("val_precision", precision.mean()),
@@ -171,6 +176,12 @@ if __name__ == "__main__":
             logger.list_of_scalars_summary(evaluation_metrics, epoch)
 
             # Print class APs and mAP
+            print("from training")
+            print(ap_class)
+            for x in class_names:
+                print(x)
+            print("len claases{}".format(len(class_names)))
+            print("len ap = {}".format(len(AP)))
             ap_table = [["Index", "Class name", "AP"]]
             for i, c in enumerate(ap_class):
                 ap_table += [[c, class_names[c], "%.5f" % AP[i]]]
