@@ -15,9 +15,9 @@ import json
 
 
 classes_dict = {
-    "pedestrian" : 0,
-    "rider" : 1,
-    "person-group-far-away" : 2,
+    "pedestrian": 0,
+    "rider": 1,
+    "person-group-far-away": 2,
 }
 
 class bbox_rect(object):
@@ -90,11 +90,13 @@ class ImageFolder(Dataset):
 
 
 class ListDataset(Dataset):
-    def __init__(self, folder_path, img_size=416, augment=True, multiscale=True, normalized_labels=True):
+    def __init__(self, folder_path, img_size=416, augment=True, multiscale=True, normalized_labels=True,
+                 ECP_PATH="/home/nodiz/dlav_project/data/ECP"):
         #with open(list_path, "r") as file:
         #    self.img_files = file.readlines()
+        assert folder_path in ["train", "val"]
 
-        self.img_files = sorted(glob.glob("%s/day/img/train/*/*.*" % folder_path))
+        self.img_files = sorted(glob.glob("{}/day/img/{}/*/*.*".format(ECP_PATH,folder_path)))
 
         self.label_files = [
             path.replace("img", "labels").replace(".png", ".json").replace(".jpg", ".json")
