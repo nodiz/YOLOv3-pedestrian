@@ -11,6 +11,39 @@ from utils.augmentations import horisontal_flip
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
+import json
+
+
+classes_dict = {
+    "pedestrian" : 0,
+    "rider" : 1,
+    "person-group-far-away" : 2,
+}
+
+class bbox_rect(object):
+    def __init__(self, s):
+        self.x0, self.x1, self.y0, self.y1 = s['x0'], s['x1'], s['y0'], s['y1']
+        self.xc = (self.x0 + self.x1) / 2
+        self.yc = (self.y0 + self.y1) / 2
+        self.w = abs(self.x1 - self.x0)
+        self.h = abs(self.y1 - self.y0)
+        self.h0 = 1024
+        self.w0 = 1920
+
+    def to_ecp(self):
+        return [self.x0, self.x1, self.y0, self.y1]
+
+    def to_yolo(self):
+        return [self.xc, self.yc, self.w, self.h]
+
+    def to_yolo_norm(self):
+        l_yolo = self.to_yolo()
+        l_yolo[0] /= self.w0
+        l_yolo[1] /= self.h0
+        l_yolo[2] /= self.w0
+        l_yolo[3] /= self.h0
+        return l_yolo
+
 
 def pad_to_square(img, pad_value):
     c, h, w = img.shape
@@ -38,7 +71,7 @@ def random_resize(images, min_size=288, max_size=448):
 
 class ImageFolder(Dataset):
     def __init__(self, folder_path, img_size=416):
-        self.files = sorted(glob.glob("%s/*.*" % folder_path))
+        self.files = sorted(glob.glob("%s/day/img/train/*/*.*" % folder_path))  # ECP/day/img/train/wuerzburg/wuerzburg_00673.png
         self.img_size = img_size
 
     def __getitem__(self, index):
@@ -57,14 +90,17 @@ class ImageFolder(Dataset):
 
 
 class ListDataset(Dataset):
-    def __init__(self, list_path, img_size=416, augment=True, multiscale=True, normalized_labels=True):
-        with open(list_path, "r") as file:
-            self.img_files = file.readlines()
+    def __init__(self, folder_path, img_size=416, augment=True, multiscale=True, normalized_labels=True):
+        #with open(list_path, "r") as file:
+        #    self.img_files = file.readlines()
+
+        self.img_files = sorted(glob.glob("%s/day/img/train/*/*.*" % folder_path))
 
         self.label_files = [
-            path.replace("images", "labels").replace(".png", ".txt").replace(".jpg", ".txt")
+            path.replace("img", "labels").replace(".png", ".json").replace(".jpg", ".json")
             for path in self.img_files
         ]
+
         self.img_size = img_size
         self.max_objects = 100
         self.augment = augment
@@ -104,7 +140,20 @@ class ListDataset(Dataset):
 
         targets = None
         if os.path.exists(label_path):
-            boxes = torch.from_numpy(np.loadtxt(label_path).reshape(-1, 5))
+
+            with open(label_path, 'r') as f:
+                label_data = json.load(f)['children']
+
+                list_of_bbox = []
+
+                for bbox in label_data:
+                    if bbox['identity'] in classes_dict.keys():
+                        bbox_id = classes_dict[bbox['identity']]
+                        bbox = bbox_rect(bbox).to_yolo_norm()
+                        list_of_bbox.append([bbox_id] + bbox)
+                list_of_bbox = np.array(list_of_bbox)
+
+            boxes = torch.from_numpy(list_of_bbox.reshape(-1, 5))
             # Extract coordinates for unpadded + unscaled image
             x1 = w_factor * (boxes[:, 1] - boxes[:, 3] / 2)
             y1 = h_factor * (boxes[:, 2] - boxes[:, 4] / 2)
