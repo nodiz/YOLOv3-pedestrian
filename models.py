@@ -138,6 +138,7 @@ class YOLOLayer(nn.Module):
         FloatTensor = torch.cuda.FloatTensor if x.is_cuda else torch.FloatTensor
         LongTensor = torch.cuda.LongTensor if x.is_cuda else torch.LongTensor
         ByteTensor = torch.cuda.ByteTensor if x.is_cuda else torch.ByteTensor
+        BoolTensor = torch.cuda.BoolTensor if x.is_cuda else torch.BoolTensor
 
         self.img_dim = img_dim
         num_samples = x.size(0)
