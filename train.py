@@ -42,9 +42,10 @@ if __name__ == "__main__":
     parser.add_argument("--evaluation_interval", type=int, default=1, help="interval evaluations on validation set")
     parser.add_argument("--compute_map", default=False, help="if True computes mAP every tenth batch")
     parser.add_argument("--multiscale_training", default=True, help="allow for multi-scale training")
-    parser.add_argument("--logger", default=False, help="activate companion Tensorboard istance")
-    parser.add_argument("--debug", default=True, help="activate some debug prints")
+    parser.add_argument("--logger", default=False, help="activate companion Tensorboard istance (BUGGED!)")
+    parser.add_argument("--debug-cuda", default=False, help="activate some debug prints")
     parser.add_argument("--town", type=str, default="", help="town to train on")
+    parser.add_argument("--overfit", default=False, help="eval on train?")
     opt = parser.parse_args()
     print(opt)
 
@@ -64,7 +65,8 @@ if __name__ == "__main__":
     # valid_path = data_config["valid"]
     # for ECP
     train_path = "train"
-    valid_path = "val"
+    if opt.overfit:
+        valid_path = "train"
 
     town = opt.town
 
@@ -137,7 +139,7 @@ if __name__ == "__main__":
 
             imgs = Variable(imgs.to(device))
             targets = Variable(targets.to(device), requires_grad=False)
-            
+
             loss, outputs = model(imgs, targets)
             loss.backward()
 
