@@ -22,6 +22,8 @@ from matplotlib.ticker import NullLocator
 
 def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="data/classes.names"):
     img_size = 416
+    conf_thres = 0.8
+    nms_thres = 0.4
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
@@ -47,7 +49,7 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="
         # Get detections
         with torch.no_grad():
             detections = model(input_imgs)
-            detections = non_max_suppression(detections, opt.conf_thres, opt.nms_thres)
+            detections = non_max_suppression(detections, conf_thres, nms_thres)
 
         # Log progress
         current_time = time.time()
