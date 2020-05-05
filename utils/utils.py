@@ -10,6 +10,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
+FMT_STRING = "\u2588\u2588"
+TERM_RESET = "\x1b[33A"
+
+def cleanTerm():
+    print(chr(27) + "[2J")
 
 def to_cpu(tensor):
     return tensor.detach().cpu()
@@ -293,17 +298,11 @@ def build_targets(pred_boxes, pred_cls, target, anchors, ignore_thres):
     # Get anchors with best iou
     ious = torch.stack([bbox_wh_iou(anchor, gwh) for anchor in anchors])
 
-    print("Good train")
-    print(target_boxes.shape)
-    print("target shape")
-    print(target.shape)
-    print("pred shape")
-    print(pred_boxes.shape)
-
     try:
         best_ious, best_n = ious.max(0)
     except RuntimeError:
         print("Error on train")
+        print("target boxes")
         print(target_boxes.shape)
         print("target shape")
         print(target.shape)

@@ -180,9 +180,11 @@ class YOLOLayer(nn.Module):
 
         if targets is None:
             return output, 0
-        #elif pred_boxes is None:
-        #    print("emergency houston")
-        #    return output, 0
+        elif targets.shape[0] == 0:
+            print("training skipped")
+            for x in range(40):
+                print("\u2588\u2588", end="")
+            return output, 0
         else:
             iou_scores, class_mask, obj_mask, noobj_mask, tx, ty, tw, th, tcls, tconf = build_targets(
                 pred_boxes=pred_boxes,
