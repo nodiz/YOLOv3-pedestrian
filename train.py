@@ -26,25 +26,29 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", type=int, default=100, help="number of epochs")
     parser.add_argument("--batch_size", type=int, default=8, help="size of each image batch")
-    parser.add_argument("--gradient_accumulations", type=int, default=2, help="number of gradient accums before step")
+    parser.add_argument("--gradient_accumulations", type=int, default=4, help="number of gradient accums before step")
     parser.add_argument("--model_def", type=str, default="config/yolov3.cfg", help="path to model definition file")
     parser.add_argument("--data_config", type=str, default="config/coco.data", help="path to data config file")
     parser.add_argument("--pretrained_weights", type=str, help="if specified starts from checkpoint model")
-    parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
+    parser.add_argument("--n_cpu", type=int, default=4, help="number of cpu threads to use during batch generation")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
     parser.add_argument("--checkpoint_interval", type=int, default=1, help="interval between saving model weights")
     parser.add_argument("--evaluation_interval", type=int, default=1, help="interval evaluations on validation set")
     parser.add_argument("--compute_map", default=False, help="if True computes mAP every tenth batch")
     parser.add_argument("--multiscale_training", default=True, help="allow for multi-scale training")
+    parser.add_argument("--logger", default=False, help="activate companion Tensorboard istance")
+    parser.add_argument("--debug", default=True, help="activate some debug prints")
     parser.add_argument("--town", type=str, default="", help="town to train on")
     opt = parser.parse_args()
     print(opt)
 
-    logger = Logger("logs")
+    if opt.logger:
+        logger = Logger("logs")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
         torch.cuda.empty_cache() # free some elves!
+
     os.makedirs("output", exist_ok=True)
     os.makedirs("checkpoints", exist_ok=True)
 
@@ -58,11 +62,20 @@ if __name__ == "__main__":
 
     town = opt.town
 
+    if opt.debug:
+        print("Start")
+        torch.cuda.memory_summary(device=device)
+
     class_names = load_classes(data_config["names"])
 
     # Initiate model
     model = Darknet(opt.model_def).to(device)
     model.apply(weights_init_normal)
+
+    if opt.debug:
+        print("Model loaded")
+        torch.cuda.memory_summary(device=device)
+
 
     # If specified we start from checkpoint
     if opt.pretrained_weights:
@@ -70,6 +83,11 @@ if __name__ == "__main__":
             model.load_state_dict(torch.load(opt.pretrained_weights))
         else:
             model.load_darknet_weights(opt.pretrained_weights)
+
+    if opt.debug:
+        print("Weights")
+        torch.cuda.memory_summary(device=device)
+
 
     # Get dataloader
     dataset = ListDataset(train_path, augment=True, multiscale=opt.multiscale_training, town=town)
@@ -81,6 +99,10 @@ if __name__ == "__main__":
         pin_memory=True,
         collate_fn=dataset.collate_fn,
     )
+
+    if opt.debug:
+        print("Dataset loaded")
+        torch.cuda.memory_summary(device=device)
 
     optimizer = torch.optim.Adam(model.parameters())
 
@@ -104,12 +126,17 @@ if __name__ == "__main__":
     for epoch in range(opt.epochs):
         model.train()
         start_time = time.time()
+        if opt.debug:
+            print("Started epoch")
+            torch.cuda.memory_summary(device=device)
         for batch_i, (_, imgs, targets) in enumerate(dataloader):
             batches_done = len(dataloader) * epoch + batch_i
 
             imgs = Variable(imgs.to(device))
             targets = Variable(targets.to(device), requires_grad=False)
-
+            if opt.debug:
+                print("Loadeed bateches")
+                torch.cuda.memory_summary(device=device)
             loss, outputs = model(imgs, targets)
             loss.backward()
 
@@ -134,13 +161,14 @@ if __name__ == "__main__":
                 metric_table += [[metric, *row_metrics]]
 
                 # Tensorboard logging
-                tensorboard_log = []
-                for j, yolo in enumerate(model.yolo_layers):
-                    for name, metric in yolo.metrics.items():
-                        if name != "grid_size":
-                            tensorboard_log += [(f"{name}_{j+1}", metric)]
-                tensorboard_log += [("loss", loss.item())]
-                logger.list_of_scalars_summary(tensorboard_log, batches_done)
+                if opt.logger:
+                    tensorboard_log = []
+                    for j, yolo in enumerate(model.yolo_layers):
+                        for name, metric in yolo.metrics.items():
+                            if name != "grid_size":
+                                tensorboard_log += [(f"{name}_{j+1}", metric)]
+                    tensorboard_log += [("loss", loss.item())]
+                    logger.list_of_scalars_summary(tensorboard_log, batches_done)
 
             log_str += AsciiTable(metric_table).table
             log_str += f"\nTotal loss {loss.item()}"
@@ -173,15 +201,11 @@ if __name__ == "__main__":
                 ("val_mAP", AP.mean()),
                 ("val_f1", f1.mean()),
             ]
-            logger.list_of_scalars_summary(evaluation_metrics, epoch)
+            if logger:
+                logger.list_of_scalars_summary(evaluation_metrics, epoch)
 
             # Print class APs and mAP
-            print("from training")
-            print(ap_class)
-            for x in class_names:
-                print(x)
-            print("len claases{}".format(len(class_names)))
-            print("len ap = {}".format(len(AP)))
+
             ap_table = [["Index", "Class name", "AP"]]
             for i, c in enumerate(ap_class):
                 ap_table += [[c, class_names[c], "%.5f" % AP[i]]]
