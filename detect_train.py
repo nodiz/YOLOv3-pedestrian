@@ -21,7 +21,8 @@ from matplotlib.ticker import NullLocator
 
 from utils.logger_torch import image_summary
 
-def demo(model, path="data/samples", img_size=416, class_path="data/classes.names", epoch_n):
+
+def demo(model, epoch_n, path="data/samples", img_size=416, class_path="data/classes.names"):
     img_size = 416
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
