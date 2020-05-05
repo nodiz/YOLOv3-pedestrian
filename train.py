@@ -67,6 +67,8 @@ if __name__ == "__main__":
     train_path = "train"
     if opt.overfit:
         valid_path = "train"
+    else:
+        valid_path = "eval"
 
     town = opt.town
 
