@@ -133,7 +133,6 @@ if __name__ == "__main__":
         "conf_noobj",
     ]
 
-    log_every = 50000
     steps = 0
     for epoch in range(opt.epochs):
         model.train()
@@ -141,7 +140,6 @@ if __name__ == "__main__":
         if opt.debug_cuda:
             debug_cuda("started epoch")
         for batch_i, (_, imgs, targets) in enumerate(dataloader):
-            steps += 1
             batches_done = len(dataloader) * epoch + batch_i
 
             imgs = Variable(imgs.to(device))
@@ -174,7 +172,6 @@ if __name__ == "__main__":
                     metric_table += [[metric, *row_metrics]]
 
                 # Tensorboard logging
-                if batch_i % log_every == 0:  # td change batch_i
                     if opt.logger:
                         tensorboard_log = []
                         for j, yolo in enumerate(model.yolo_layers):
@@ -183,6 +180,7 @@ if __name__ == "__main__":
                                     tensorboard_log += [(f"{name}_{j+1}", metric)]
                         tensorboard_log += [("loss", loss.item())]
                         logger.list_of_scalars_summary(tensorboard_log, batches_done)
+                if batch_i % log_every == 0:  # td change batch_i
 
                 log_str += AsciiTable(metric_table).table
 
