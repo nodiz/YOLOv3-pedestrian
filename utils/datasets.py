@@ -153,6 +153,8 @@ class ListDataset(Dataset):
                         bbox_id = classes_dict[bbox['identity']]
                         bbox = bbox_rect(bbox).to_yolo_norm()
                         list_of_bbox.append([bbox_id] + bbox)
+                if len(list_of_bbox) == 0:
+                    print("found zero label data: {}".format(label_path))
                 list_of_bbox = np.array(list_of_bbox)
 
             boxes = torch.from_numpy(list_of_bbox.reshape(-1, 5))
