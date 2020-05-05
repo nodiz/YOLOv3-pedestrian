@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     town = opt.town
 
-    if opt.debug:
+    if opt.debug-cuda:
         debug_cuda("start")
 
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     model = Darknet(opt.model_def).to(device)
     model.apply(weights_init_normal)
 
-    if opt.debug:
+    if opt.debug-cuda:
         debug_cuda("model loaded")
 
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         else:
             model.load_darknet_weights(opt.pretrained_weights)
 
-    if opt.debug:
+    if opt.debug-cuda:
         debug_cuda("weights loaded")
 
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         collate_fn=dataset.collate_fn,
     )
 
-    if opt.debug:
+    if opt.debug-cuda:
         debug_cuda("dataset loaded")
 
     optimizer = torch.optim.Adam(model.parameters())
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     for epoch in range(opt.epochs):
         model.train()
         start_time = time.time()
-        if opt.debug:
+        if opt.debug-cuda:
             debug_cuda("started epoch")
         for batch_i, (_, imgs, targets) in enumerate(dataloader):
             batches_done = len(dataloader) * epoch + batch_i
