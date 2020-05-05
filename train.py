@@ -229,7 +229,7 @@ if __name__ == "__main__":
             print(f"---- mAP {AP.mean()}")
 
             print("Running demo")
-            demo(model, epoch_n=epoch)
+            demo(model, logger, epoch_n=epoch)
 
         if epoch % opt.checkpoint_interval == 0:
             torch.save(model.state_dict(), f"checkpoints/yolov3_ckpt_%d.pth" % epoch)

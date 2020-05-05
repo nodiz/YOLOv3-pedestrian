@@ -19,10 +19,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.ticker import NullLocator
 
-from utils.logger_torch import image_summary
 
-
-def demo(model, epoch_n, path="data/samples", img_size=416, class_path="data/classes.names"):
+def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="data/classes.names"):
     img_size = 416
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -113,4 +111,4 @@ def demo(model, epoch_n, path="data/samples", img_size=416, class_path="data/cla
         temp = fig.canvas
         img = Image.frombytes('RGB', temp.get_width_height(), temp.tostring_rgb())
         plt.close()
-        image_summary(filename, img, epoch_n)
+        logger.image_summary(filename, img, epoch_n)
