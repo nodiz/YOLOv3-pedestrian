@@ -34,7 +34,7 @@ def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size
     labels = []
     sample_metrics = []  # List of tuples (TP, confs, pred)
     for batch_i, (_, imgs, targets) in enumerate(tqdm.tqdm(dataloader, desc="Detecting objects")):
-        if i > batch_lim:
+        if batch_i > batch_lim:
             break
         # Extract labels
         labels += targets[:, 1].tolist()
