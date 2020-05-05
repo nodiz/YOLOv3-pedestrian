@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
 
     # Get dataloader
-    dataset = ListDataset(train_path, augment=True, multiscale=opt.multiscale_training, town=town)
+    dataset = ListDataset(train_path, augment=not opt.overfit, multiscale=opt.multiscale_training, town=town)
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=opt.batch_size,
@@ -172,7 +172,7 @@ if __name__ == "__main__":
                     metric_table += [[metric, *row_metrics]]
 
                 # Tensorboard logging
-                if steps % log_every == 0:
+                if batch_i % log_every == 0:  # td change batch_i
                     if opt.logger:
                         tensorboard_log = []
                         for j, yolo in enumerate(model.yolo_layers):
