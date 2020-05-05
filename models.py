@@ -182,6 +182,8 @@ class YOLOLayer(nn.Module):
             return output, 0
         elif targets.shape[0] == 0:
             print("training skipped")
+            for x in range(40):
+                print("\u2588\u2588", end="")
             return output, 0
         else:
             iou_scores, class_mask, obj_mask, noobj_mask, tx, ty, tw, th, tcls, tconf = build_targets(

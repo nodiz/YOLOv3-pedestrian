@@ -1,6 +1,7 @@
 from __future__ import division
 
 from models import *
+from utils.logger import *
 from utils.utils import *
 from utils.datasets import *
 from utils.parse_config import *
@@ -20,7 +21,6 @@ from torchvision import datasets
 from torchvision import transforms
 from torch.autograd import Variable
 import torch.optim as optim
-
 
 
 def debug_cuda(where):
@@ -46,12 +46,10 @@ if __name__ == "__main__":
     parser.add_argument("--debug_cuda", default=False, help="activate some debug prints")
     parser.add_argument("--town", type=str, default="", help="town to train on")
     parser.add_argument("--overfit", default=False, help="eval on train?")
-    parser.add_argument("--metric", default=False, help="show metric table?")
     opt = parser.parse_args()
     print(opt)
 
     if opt.logger:
-        from utils.logger import *
         logger = Logger("logs")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -101,7 +99,7 @@ if __name__ == "__main__":
 
 
     # Get dataloader
-    dataset = ListDataset(train_path, augment=not opt.overfit, multiscale=opt.multiscale_training, town=town)
+    dataset = ListDataset(train_path, augment=True, multiscale=opt.multiscale_training, town=town)
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=opt.batch_size,
@@ -160,19 +158,17 @@ if __name__ == "__main__":
             # ----------------
 
             log_str = "\n---- [Epoch %d/%d, Batch %d/%d] ----\n" % (epoch, opt.epochs, batch_i, len(dataloader))
-            if opt.metric:
-                metric_table = [["Metrics", *[f"YOLO Layer {i}" for i in range(len(model.yolo_layers))]]]
+            metric_table = [["Metrics", *[f"YOLO Layer {i}" for i in range(len(model.yolo_layers))]]]
 
-                # Log metrics at each YOLO layer
-                for i, metric in enumerate(metrics):
-                    formats = {m: "%.6f" for m in metrics}
-                    formats["grid_size"] = "%2d"
-                    formats["cls_acc"] = "%.2f%%"
-                    row_metrics = [formats[metric] % yolo.metrics.get(metric, 0) for yolo in model.yolo_layers]
-                    metric_table += [[metric, *row_metrics]]
+            # Log metrics at each YOLO layer
+            for i, metric in enumerate(metrics):
+                formats = {m: "%.6f" for m in metrics}
+                formats["grid_size"] = "%2d"
+                formats["cls_acc"] = "%.2f%%"
+                row_metrics = [formats[metric] % yolo.metrics.get(metric, 0) for yolo in model.yolo_layers]
+                metric_table += [[metric, *row_metrics]]
 
                 # Tensorboard logging
-<<<<<<< HEAD
                 if opt.logger:
                     tensorboard_log = []
                     for j, yolo in enumerate(model.yolo_layers):
@@ -181,20 +177,8 @@ if __name__ == "__main__":
                                 tensorboard_log += [(f"{name}_{j + 1}", metric)]
                     tensorboard_log += [("loss", loss.item())]
                     logger.list_of_scalars_summary(tensorboard_log, batches_done)
-=======
-                if batch_i % log_every == 0:  # td change batch_i
-                    if opt.logger:
-                        tensorboard_log = []
-                        for j, yolo in enumerate(model.yolo_layers):
-                            for name, metric in yolo.metrics.items():
-                                if name != "grid_size":
-                                    tensorboard_log += [(f"{name}_{j+1}", metric)]
-                        tensorboard_log += [("loss", loss.item())]
-                        logger.list_of_scalars_summary(tensorboard_log, batches_done)
->>>>>>> 3e463dfd71de0e915d755bdb9f633c8aebcd3bff
 
-                log_str += AsciiTable(metric_table).table
-
+            log_str += AsciiTable(metric_table).table
             log_str += f"\nTotal loss {loss.item()}"
 
             # Determine approximate time left for epoch

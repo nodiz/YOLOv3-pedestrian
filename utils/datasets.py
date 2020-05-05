@@ -16,8 +16,8 @@ import json
 
 classes_dict = {
     "pedestrian": 0,
-  #  "rider": 1,
-  #  "person-group-far-away": 2,
+    "rider": 1,
+    "person-group-far-away": 2,
 }
 
 class bbox_rect(object):
@@ -71,7 +71,7 @@ def random_resize(images, min_size=288, max_size=448):
 
 class ImageFolder(Dataset):
     def __init__(self, folder_path, img_size=416):
-        self.files = sorted(glob.glob("%s/*.*" % folder_path))
+        self.files = sorted(glob.glob("%s/day/img/train/*/*.*" % folder_path))  # ECP/day/img/train/wuerzburg/wuerzburg_00673.png
         self.img_size = img_size
 
     def __getitem__(self, index):
