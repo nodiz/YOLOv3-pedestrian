@@ -21,7 +21,7 @@ from torchvision import transforms
 from torch.autograd import Variable
 import torch.optim as optim
 
-from detect_train import demo
+#from detect_train import demo
 
 
 def debug_cuda(where):
@@ -229,8 +229,9 @@ if __name__ == "__main__":
             print(AsciiTable(ap_table).table)
             print(f"---- mAP {AP.mean()}")
 
-            print("Running demo")
-            demo(model, logger, epoch_n=epoch)
+            #print("Running demo")
+            #demo(model, logger, epoch_n=epoch)
 
         if epoch % opt.checkpoint_interval == 0:
+            print("saving model")
             torch.save(model.state_dict(), f"checkpoints/yolov3_ckpt_%d.pth" % epoch)
