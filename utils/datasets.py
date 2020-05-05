@@ -16,8 +16,8 @@ import json
 
 classes_dict = {
     "pedestrian": 0,
-    "rider": 1,
-    "person-group-far-away": 2,
+  #  "rider": 1,
+  #  "person-group-far-away": 2,
 }
 
 class bbox_rect(object):
