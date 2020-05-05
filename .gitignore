@@ -11,5 +11,6 @@ weights/*.weights
 __pycache__
 checkpoints
 data/ECP
-
+weights/
+logs/
 .idea/
