@@ -207,7 +207,8 @@ if __name__ == "__main__":
                 nms_thres=0.5,
                 img_size=opt.img_size,
                 batch_size=24,
-                town=town
+                town=town,
+                batch_lim=opt.eval_batch_lim
             )
             evaluation_metrics = [
                 ("val_precision", precision.mean()),
