@@ -293,6 +293,7 @@ def build_targets(pred_boxes, pred_cls, target, anchors, ignore_thres):
     # Get anchors with best iou
     ious = torch.stack([bbox_wh_iou(anchor, gwh) for anchor in anchors])
 
+
     try:
         best_ious, best_n = ious.max(0)
     except RuntimeError:
@@ -301,7 +302,14 @@ def build_targets(pred_boxes, pred_cls, target, anchors, ignore_thres):
         print(anchors.shape)
         print("na {} nb {} nc {} ng {}".format(nA,nB,nC,nG))
         print(target_boxes.shape)
+        print("target shape")
         print(target.shape)
+        print("pred shape")
+        print(pred_boxes.shape)
+        print("gwh")
+        print(gwh)
+        print("target")
+        print(target)
         exit()
 
     # Separate target values
