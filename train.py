@@ -143,6 +143,8 @@ if __name__ == "__main__":
             targets = Variable(targets.to(device), requires_grad=False)
 
             loss, outputs = model(imgs, targets)
+            if type(loss) == int:
+                continue
             loss.backward()
 
             if batches_done % opt.gradient_accumulations:
@@ -197,7 +199,7 @@ if __name__ == "__main__":
                 conf_thres=0.5,
                 nms_thres=0.5,
                 img_size=opt.img_size,
-                batch_size=8,
+                batch_size=24,
                 town=town
             )
             evaluation_metrics = [
