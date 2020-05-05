@@ -113,4 +113,4 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="
         temp = fig.canvas
         img = Image.frombytes('RGB', temp.get_width_height(), temp.tostring_rgb())
         plt.close()
-        logger.image_summary(filename, img, epoch_n)
+        logger.image_summary(filename, np.array(img), epoch_n)
