@@ -47,11 +47,12 @@ if __name__ == "__main__":
     parser.add_argument("--town", type=str, default="", help="town to train on")
     parser.add_argument("--overfit", default=False, help="eval on train?")
     parser.add_argument("--metric", default=False, help="show metric table?")
+    parser.add_argument("--eval_batch_num", type=int, default=250, help="number of batches to test on during eval")
     opt = parser.parse_args()
     print(opt)
 
     if opt.logger:
-        from utils.logger import *
+        from utils.logger_torch import *
         logger = Logger("logs")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
