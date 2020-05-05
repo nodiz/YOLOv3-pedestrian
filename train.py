@@ -22,15 +22,21 @@ from torchvision import transforms
 from torch.autograd import Variable
 import torch.optim as optim
 
+
+def debug_cuda(where):
+    print(where)
+    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(torch.cuda.memory_summary(device=device, abbreviated=True))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", type=int, default=100, help="number of epochs")
     parser.add_argument("--batch_size", type=int, default=8, help="size of each image batch")
-    parser.add_argument("--gradient_accumulations", type=int, default=4, help="number of gradient accums before step")
+    parser.add_argument("--gradient_accumulations", type=int, default=2, help="number of gradient accums before step")
     parser.add_argument("--model_def", type=str, default="config/yolov3.cfg", help="path to model definition file")
     parser.add_argument("--data_config", type=str, default="config/coco.data", help="path to data config file")
     parser.add_argument("--pretrained_weights", type=str, help="if specified starts from checkpoint model")
-    parser.add_argument("--n_cpu", type=int, default=4, help="number of cpu threads to use during batch generation")
+    parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
     parser.add_argument("--checkpoint_interval", type=int, default=1, help="interval between saving model weights")
     parser.add_argument("--evaluation_interval", type=int, default=1, help="interval evaluations on validation set")
@@ -63,8 +69,8 @@ if __name__ == "__main__":
     town = opt.town
 
     if opt.debug:
-        print("Start")
-        torch.cuda.memory_summary(device=device)
+        debug_cuda("start")
+
 
     class_names = load_classes(data_config["names"])
 
@@ -73,8 +79,7 @@ if __name__ == "__main__":
     model.apply(weights_init_normal)
 
     if opt.debug:
-        print("Model loaded")
-        torch.cuda.memory_summary(device=device)
+        debug_cuda("model loaded")
 
 
     # If specified we start from checkpoint
@@ -85,8 +90,8 @@ if __name__ == "__main__":
             model.load_darknet_weights(opt.pretrained_weights)
 
     if opt.debug:
-        print("Weights")
-        torch.cuda.memory_summary(device=device)
+        debug_cuda("weights loaded")
+
 
 
     # Get dataloader
@@ -101,8 +106,7 @@ if __name__ == "__main__":
     )
 
     if opt.debug:
-        print("Dataset loaded")
-        torch.cuda.memory_summary(device=device)
+        debug_cuda("dataset loaded")
 
     optimizer = torch.optim.Adam(model.parameters())
 
@@ -127,16 +131,13 @@ if __name__ == "__main__":
         model.train()
         start_time = time.time()
         if opt.debug:
-            print("Started epoch")
-            torch.cuda.memory_summary(device=device)
+            debug_cuda("started epoch")
         for batch_i, (_, imgs, targets) in enumerate(dataloader):
             batches_done = len(dataloader) * epoch + batch_i
 
             imgs = Variable(imgs.to(device))
             targets = Variable(targets.to(device), requires_grad=False)
-            if opt.debug:
-                print("Loadeed bateches")
-                torch.cuda.memory_summary(device=device)
+            
             loss, outputs = model(imgs, targets)
             loss.backward()
 
@@ -201,7 +202,7 @@ if __name__ == "__main__":
                 ("val_mAP", AP.mean()),
                 ("val_f1", f1.mean()),
             ]
-            if logger:
+            if opt.logger:
                 logger.list_of_scalars_summary(evaluation_metrics, epoch)
 
             # Print class APs and mAP
