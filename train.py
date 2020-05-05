@@ -134,12 +134,14 @@ if __name__ == "__main__":
     ]
 
     log_every = 50000
+    steps = 0
     for epoch in range(opt.epochs):
         model.train()
         start_time = time.time()
         if opt.debug_cuda:
             debug_cuda("started epoch")
         for batch_i, (_, imgs, targets) in enumerate(dataloader):
+            steps += 1
             batches_done = len(dataloader) * epoch + batch_i
 
             imgs = Variable(imgs.to(device))
