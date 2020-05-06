@@ -15,6 +15,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
+import torchvision.transforms.functional as TF
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -95,7 +96,7 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416,
 
                 color = bbox_colors[int(np.where(unique_labels == int(cls_pred))[0])]
                 # Create a Rectangle patch
-                bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=0.5, edgecolor=color, facecolor="none")
+                bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=0.75, edgecolor=color, facecolor="none")
                 # Add the bbox to the plot
                 ax.add_patch(bbox)
 
@@ -107,4 +108,8 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416,
         os.makedirs(imag_path, exist_ok=True)
         plt.savefig(f"{imag_path}/{str(epoch_n)}_{filename}.png", bbox_inches="tight", pad_inches=0.0)
         plt.close()
-        # logger.image_summary(filename, img, epoch_n)
+
+        image = Image.open(f"{imag_path}/{str(epoch_n)}_{filename}.png")
+        img = TF.to_tensor(image)
+        img.unsqueeze_(0)
+        logger.image_summary(filename, img, epoch_n)
