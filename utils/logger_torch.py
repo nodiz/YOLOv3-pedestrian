@@ -4,13 +4,15 @@ import torchvision
 
 
 class Logger(object):
-    def __init__(self, log_dir, active):
+    def __init__(self, log_dir, active, subdir=""):
         """Create a summary writer logging to log_dir."""
         now = datetime.datetime.now()
         dt_string = now.strftime("%d%H%M")
         self.active = active
         if self.active:
-            self.writer = SummaryWriter(log_dir, comment=dt_string)
+            self.writer = SummaryWriter(log_dir+subdir, comment=dt_string)
+
+
 
     def scalar_summary(self, tag, value, step):
         """Log a scalar variable."""
