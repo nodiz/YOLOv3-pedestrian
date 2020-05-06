@@ -1,33 +1,28 @@
 from __future__ import division
 
-from models import *
-from utils.utils import *
-from utils.datasets import *
-from utils.parse_config import *
-from test import evaluate
-
-from terminaltables import AsciiTable
-
-import os
-import sys
-import time
-import datetime
 import argparse
+import datetime
+import os
+import time
 
 import torch
-from torch.utils.data import DataLoader
-from torchvision import datasets
-from torchvision import transforms
+from terminaltables import AsciiTable
 from torch.autograd import Variable
-import torch.optim as optim
+from torch.utils.data import DataLoader
 
-#from detect_train import demo
+from detect_train import demo
+from models import *
+from test import evaluate
+from utils.datasets import *
+from utils.parse_config import *
+from utils.utils import *
 
 
 def debug_cuda(where):
     print(where)
-    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(torch.cuda.memory_summary(device=device, abbreviated=True))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -54,11 +49,12 @@ if __name__ == "__main__":
 
     if opt.logger:
         from utils.logger_torch import *
+
         logger = Logger("logs", opt.logger)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
-        torch.cuda.empty_cache() # free some elves!
+        torch.cuda.empty_cache()  # free some elves!
 
     os.makedirs("output", exist_ok=True)
     os.makedirs("checkpoints", exist_ok=True)
@@ -79,7 +75,6 @@ if __name__ == "__main__":
     if opt.debug_cuda:
         debug_cuda("start")
 
-
     class_names = load_classes(data_config["names"])
 
     # Initiate model
@@ -88,7 +83,6 @@ if __name__ == "__main__":
 
     if opt.debug_cuda:
         debug_cuda("model loaded")
-
 
     # If specified we start from checkpoint
     if opt.pretrained_weights:
@@ -99,8 +93,6 @@ if __name__ == "__main__":
 
     if opt.debug_cuda:
         debug_cuda("weights loaded")
-
-
 
     # Get dataloader
     dataset = ListDataset(train_path, augment=not opt.overfit, multiscale=opt.multiscale_training, town=town)
@@ -180,7 +172,7 @@ if __name__ == "__main__":
                     for j, yolo in enumerate(model.yolo_layers):
                         for name, metric in yolo.metrics.items():
                             if name != "grid_size":
-                                tensorboard_log += [(f"{name}_{j+1}", metric)]
+                                tensorboard_log += [(f"{name}_{j + 1}", metric)]
                     tensorboard_log += [("loss", loss.item())]
                     logger.list_of_scalars_summary(tensorboard_log, batches_done)
 
@@ -229,8 +221,8 @@ if __name__ == "__main__":
             print(AsciiTable(ap_table).table)
             print(f"---- mAP {AP.mean()}")
 
-            #print("Running demo")
-            #demo(model, logger, epoch_n=epoch)
+            print("Running demo")
+            demo(model, logger, epoch_n=epoch)
 
         if epoch % opt.checkpoint_interval == 0:
             print("saving model")
