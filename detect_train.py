@@ -21,7 +21,7 @@ import matplotlib.patches as patches
 from matplotlib.ticker import NullLocator
 
 
-def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="data/classes.names"):
+def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="data/classes.names", imag_path="bck_check/images"):
     img_size = 416
     conf_thres = 0.8
     nms_thres = 0.4
@@ -67,6 +67,7 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="
     colors = [cmap(i) for i in np.linspace(0, 1, 20)]
 
     print("\nSaving images:")
+    path = imag_path + str(epoch_n) + "/"
     # Iterate through images and save plot of detections
     for img_i, (path, detections) in enumerate(zip(imgs, img_detections)):
 
@@ -113,14 +114,11 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="
         fig.canvas.draw()
         temp = fig.canvas
         img = Image.frombytes('RGB', temp.get_width_height(), temp.tostring_rgb())
-        
-        try:
-            os.mkdir(path + "/testimages/"+ str(epoch_n))
-        except OSError:
-            pass
-        image_name = path + "/testimages/" + str(epoch_n) + "/" + str(img_i) +".png"
+
+        os.makedirs(path, exist_ok=True)
+
+        image_name = path + filename + ".png"
         img.save(image_name, "PNG")
-        
-        img = np.array(img)
+
         plt.close()
-        logger.image_summary(filename, img, epoch_n)
+        # logger.image_summary(filename, img, epoch_n)
