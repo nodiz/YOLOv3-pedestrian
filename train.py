@@ -94,6 +94,7 @@ if __name__ == "__main__":
 
     lr = opt.lr
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    # filter(lambda p: p.requires_grad, model.parameters())
     scheduler = ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
 
     metrics = [
