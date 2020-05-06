@@ -8,8 +8,9 @@ class Logger(object):
         """Create a summary writer logging to log_dir."""
         now = datetime.datetime.now()
         dt_string = now.strftime("%d%H%M")
-        self.writer = SummaryWriter(log_dir, comment=dt_string)
         self.active = active
+        if self.active:
+            self.writer = SummaryWriter(log_dir, comment=dt_string)
 
     def scalar_summary(self, tag, value, step):
         """Log a scalar variable."""
