@@ -21,6 +21,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.ticker import NullLocator
 
+from utils.logger_torch import *
+
 
 def demo(model, logger, epoch_n, path="data/samples", img_size=416,
          class_path="data/classes.names", imag_path="bck_check/images"):
@@ -107,9 +109,10 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416,
         filename = path.split("/")[-1].split(".")[0]
         os.makedirs(imag_path, exist_ok=True)
         plt.savefig(f"{imag_path}/{str(epoch_n)}_{filename}.png", bbox_inches="tight", pad_inches=0.0)
-        plt.close()
+        plt.close('all')
 
         image = Image.open(f"{imag_path}/{str(epoch_n)}_{filename}.png")
         img = TF.to_tensor(image)
-        img.unsqueeze_(0)
+        #img.unsqueeze_(0)
         logger.image_summary(filename, img, epoch_n)
+        logger.list_of_images(filename+"grid", img, epoch_n)
