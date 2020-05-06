@@ -8,6 +8,7 @@ import os
 import sys
 import time
 import datetime
+import numpy as np
 
 from PIL import Image
 
@@ -112,6 +113,14 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="
         fig.canvas.draw()
         temp = fig.canvas
         img = Image.frombytes('RGB', temp.get_width_height(), temp.tostring_rgb())
+        
+        try:
+            os.mkdir(path + "/testimages/"+ str(epoch_n))
+        except OSError:
+            pass
+        image_name = "testimages/" + str(epoch_n) + "/" + str(img_i) +".png"
+        img.save(image_name, "PNG")
+       
         img = np.array(img)
         plt.close()
         logger.image_summary(filename, img, epoch_n)
