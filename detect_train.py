@@ -118,7 +118,7 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="
             os.mkdir(path + "/testimages/"+ str(epoch_n))
         except OSError:
             pass
-        image_name = "testimages/" + str(epoch_n) + "/" + str(img_i) +".png"
+        image_name = path + "/testimages/" + str(epoch_n) + "/" + str(img_i) +".png"
         img.save(image_name, "PNG")
         
         img = np.array(img)
