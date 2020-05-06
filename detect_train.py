@@ -113,6 +113,4 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416,
 
         image = Image.open(f"{imag_path}/{str(epoch_n)}_{filename}.png")
         img = TF.to_tensor(image)
-        #img.unsqueeze_(0)
         logger.image_summary(filename, img, epoch_n)
-        logger.list_of_images(filename+"grid", img, epoch_n)
