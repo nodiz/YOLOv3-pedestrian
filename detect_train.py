@@ -21,7 +21,9 @@ import matplotlib.patches as patches
 from matplotlib.ticker import NullLocator
 
 
-def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="data/classes.names", imag_path="bck_check/images"):
+def demo(model, logger, epoch_n, path="data/samples", img_size=416,
+         class_path="data/classes.names", imag_path="bck_check/images"):
+
     img_size = 416
     conf_thres = 0.8
     nms_thres = 0.4
@@ -93,32 +95,16 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416, class_path="
 
                 color = bbox_colors[int(np.where(unique_labels == int(cls_pred))[0])]
                 # Create a Rectangle patch
-                bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=1, edgecolor=color, facecolor="none")
+                bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=0.5, edgecolor=color, facecolor="none")
                 # Add the bbox to the plot
                 ax.add_patch(bbox)
-                # Add label
-                plt.text(
-                    x1,
-                    y1,
-                    s=classes[int(cls_pred)],
-                    color="white",
-                    verticalalignment="top",
-                    bbox={"color": color, "pad": 0},
-                )
 
         # Save generated image with detections
         plt.axis("off")
         plt.gca().xaxis.set_major_locator(NullLocator())
         plt.gca().yaxis.set_major_locator(NullLocator())
         filename = path.split("/")[-1].split(".")[0]
-        fig.canvas.draw()
-        temp = fig.canvas
-        img = Image.frombytes('RGB', temp.get_width_height(), temp.tostring_rgb())
-
-        os.makedirs(save_path, exist_ok=True)
-
-        image_name = save_path + filename + ".png"
-        img.save(image_name, "PNG")
-
+        os.makedirs(imag_path, exist_ok=True)
+        plt.savefig(f"{imag_path}/{str(epoch_n)}_{filename}.png", bbox_inches="tight", pad_inches=0.0)
         plt.close()
         # logger.image_summary(filename, img, epoch_n)
