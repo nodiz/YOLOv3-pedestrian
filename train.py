@@ -122,6 +122,7 @@ if __name__ == "__main__":
     for epoch in range(opt.start_epoch, opt.epochs):
         model.train()
         model.set_backbone_grad(epoch > opt.freeze_backbone_until)
+        logger.scalar_summary("params", model.get_active_params(), epoch)
 
         start_time = time.time()
         for batch_i, (_, imgs, targets) in enumerate(dataloader):

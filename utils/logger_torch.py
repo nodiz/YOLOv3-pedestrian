@@ -12,8 +12,6 @@ class Logger(object):
         if self.active:
             self.writer = SummaryWriter(log_dir+subdir, comment=dt_string)
 
-
-
     def scalar_summary(self, tag, value, step):
         """Log a scalar variable."""
         if not self.active:

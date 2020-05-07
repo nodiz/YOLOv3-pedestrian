@@ -375,4 +375,4 @@ class Darknet(nn.Module):
         total_params = sum([np.prod(p.size()) for p in self.parameters()])
         filter_param = sum([np.prod(p.size()) for p in param_filtered])
 
-        return filter_param, total_params
+        return filter_param # , total_params

@@ -1,23 +1,10 @@
 from __future__ import division
 
 import argparse
-import datetime
-import os
-import time
 
-import torch
-from terminaltables import AsciiTable
-from torch.autograd import Variable
-from torch.utils.data import DataLoader
-
-from detect_train import demo
 from models import *
-from test import evaluate
 from utils.datasets import *
-from utils.parse_config import *
 from utils.utils import *
-
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -62,10 +49,21 @@ if __name__ == "__main__":
             model.load_darknet_weights(opt.pretrained_weights)
 
     child_counter = 0
+    pippo = 0
     for child in model.children():
-        print(" child", child_counter, "is -")
-        print(child)
-        child_counter += 1
+        for subchild in child.children():
+            if child_counter < 75:
+                print(child_counter)
+                for subsubchild in subchild.children():
+                    for param in subsubchild.parameters():
+                        param.requires_grad = False
+                        print(subsubchild)
+                        print(param.requires_grad)
+                child_counter += 1
 
+    param_filtered = filter(lambda p: p.requires_grad, model.parameters())
 
+    params = sum([np.prod(p.size()) for p in model.parameters()])
+    filter_param = sum([np.prod(p.size()) for p in param_filtered])
 
+    print(params, filter_param)
