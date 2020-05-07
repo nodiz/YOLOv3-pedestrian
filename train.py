@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     if opt.logger:
         from utils.logger_torch import *
-        logger = Logger("logs/", opt.logger, opt.name)
+        logger = Logger("bck_check/tensorboard/", opt.logger, opt.name)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
