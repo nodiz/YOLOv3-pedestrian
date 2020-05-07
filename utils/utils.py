@@ -340,5 +340,8 @@ def build_targets(pred_boxes, pred_cls, target, anchors, ignore_thres):
 
 
 def average_filter(current,new, steps):
-    return (current * (steps - 1) + new) / steps
+    if current == -1:
+        return new
+    else:
+        return (current * (steps - 1) + new) / steps
 

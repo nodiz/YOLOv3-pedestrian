@@ -43,13 +43,10 @@ if __name__ == "__main__":
     parser.add_argument("--start_epoch", type=int, default=0, help="not done training?")
     parser.add_argument("--freeze_backbone_until", type=int, default=0, help="freeze backbone for x first steps")
 
-
     opt = parser.parse_args()
-    print(opt)
 
     if opt.logger:
         from utils.logger_torch import *
-
         logger = Logger("logs/", opt.logger, opt.name)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -120,9 +117,8 @@ if __name__ == "__main__":
 
     log_every = 10
     t_steps = 0
-    start_loss = 1
     average_steps = 30
-    loss_filter = 0
+    loss_filtered = -1
     for epoch in range(opt.start_epoch, opt.epochs):
         model.train()
         model.set_backbone_grad(epoch > opt.freeze_backbone_until)
@@ -138,15 +134,11 @@ if __name__ == "__main__":
             if type(loss) == int:
                 continue
             loss.backward()
-            if start_loss:
-                loss_filter = loss.item()
-                start_loss = 0
-            else:
-                loss_filter = average_filter(loss_filter, loss.item(),average_steps)
+            loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
 
             if batches_done % opt.gradient_accumulations:
                 # Accumulates gradient before each step
-                scheduler.step(loss_filter)
+                scheduler.step(loss_filtered)
                 optimizer.zero_grad()
 
             # ----------------
@@ -225,4 +217,4 @@ if __name__ == "__main__":
 
         if epoch % opt.checkpoint_interval == 0:
             print("saving model")
-            torch.save(model.state_dict(), f"checkpoints/yolov3_ckpt_%d.pth" % epoch)
+            torch.save(model.state_dict(), f"checkpoints/yolov3_ckpt_{opt.name}_%d.pth" % epoch)
