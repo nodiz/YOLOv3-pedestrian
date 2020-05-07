@@ -33,13 +33,17 @@ if __name__ == "__main__":
     parser.add_argument("--evaluation_interval", type=int, default=1, help="interval evaluations on validation set")
     parser.add_argument("--compute_map", default=False, help="if True computes mAP every tenth batch")
     parser.add_argument("--multiscale_training", default=True, help="allow for multi-scale training")
-    parser.add_argument("--logger", default=True, help="activate companion Tensorboard istance (BUGGED!)")
+    parser.add_argument("--logger", default=True, help="activate companion Tensorboard istance")
     parser.add_argument("--town", type=str, default="", help="subset town to train on")
     parser.add_argument("--overfit", default=False, help="eval on train?")
     parser.add_argument("--metric", default=False, help="show metric table?")
     parser.add_argument("--eval_batch_lim", type=int, default=50, help="number of batches to test on during eval")
     parser.add_argument("--lr", type=float, default=0.01, help="learning rate value")
     parser.add_argument("--name", type=str, default="", help="run name")
+    parser.add_argument("--start_epoch", type=int, default=0, help="not done training?")
+    parser.add_argument("--freeze_backbone_until", type=int, default=0, help="freeze backbone for x first steps")
+
+
     opt = parser.parse_args()
     print(opt)
 
@@ -119,8 +123,10 @@ if __name__ == "__main__":
     start_loss = 1
     average_steps = 30
     loss_filter = 0
-    for epoch in range(opt.epochs):
+    for epoch in range(opt.start_epoch, opt.epochs):
         model.train()
+        model.set_backbone_grad(epoch > opt.freeze_backbone_until)
+
         start_time = time.time()
         for batch_i, (_, imgs, targets) in enumerate(dataloader):
             batches_done = len(dataloader) * epoch + batch_i
