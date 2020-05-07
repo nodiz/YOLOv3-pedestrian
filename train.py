@@ -38,7 +38,7 @@ if __name__ == "__main__":
     parser.add_argument("--overfit", default=False, help="eval on train?")
     parser.add_argument("--metric", default=False, help="show metric table?")
     parser.add_argument("--eval_batch_lim", type=int, default=50, help="number of batches to test on during eval")
-    parser.add_argument("--lr", type=float, default=0.01, help="learning rate value")
+    parser.add_argument("--lr", type=float, default=0.001, help="learning rate value")
     parser.add_argument("--name", type=str, default="", help="run name")
     parser.add_argument("--start_epoch", type=int, default=0, help="not done training?")
     parser.add_argument("--freeze_backbone_until", type=int, default=0, help="freeze backbone for x first steps")
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     )
 
     lr = opt.lr
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
     # filter(lambda p: p.requires_grad, model.parameters())
     scheduler = ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
 
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     loss_filtered = -1
     for epoch in range(opt.start_epoch, opt.epochs):
         model.train()
-        model.set_backbone_grad(epoch > opt.freeze_backbone_until)
+        model.set_backbone_grad(epoch >= opt.freeze_backbone_until)
         logger.scalar_summary("params", model.get_active_params(), epoch)
 
         start_time = time.time()
@@ -214,7 +214,7 @@ if __name__ == "__main__":
             print(f"---- mAP {AP.mean()}")
 
             print("Running demo")
-            demo(model, logger, epoch_n=epoch)
+            demo(model, logger, epoch_n=epoch, img_size=opt.img_size)
 
         if epoch % opt.checkpoint_interval == 0:
             print("saving model")
