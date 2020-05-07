@@ -17,12 +17,7 @@ from utils.datasets import *
 from utils.parse_config import *
 from utils.utils import *
 
-
-def debug_cuda(where):
-    print(where)
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(torch.cuda.memory_summary(device=device, abbreviated=True))
-
+# from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -38,19 +33,21 @@ if __name__ == "__main__":
     parser.add_argument("--evaluation_interval", type=int, default=1, help="interval evaluations on validation set")
     parser.add_argument("--compute_map", default=False, help="if True computes mAP every tenth batch")
     parser.add_argument("--multiscale_training", default=True, help="allow for multi-scale training")
-    parser.add_argument("--logger", default=True, help="activate companion Tensorboard istance (BUGGED!)")
-    parser.add_argument("--debug_cuda", default=False, help="activate some debug prints")
+    parser.add_argument("--logger", default=True, help="activate companion Tensorboard istance")
     parser.add_argument("--town", type=str, default="", help="subset town to train on")
     parser.add_argument("--overfit", default=False, help="eval on train?")
     parser.add_argument("--metric", default=False, help="show metric table?")
     parser.add_argument("--eval_batch_lim", type=int, default=50, help="number of batches to test on during eval")
+    parser.add_argument("--lr", type=float, default=0.001, help="learning rate value")
+    parser.add_argument("--name", type=str, default="", help="run name")
+    parser.add_argument("--start_epoch", type=int, default=0, help="not done training?")
+    parser.add_argument("--freeze_backbone_until", type=int, default=0, help="freeze backbone for x first steps")
+
     opt = parser.parse_args()
-    print(opt)
 
     if opt.logger:
         from utils.logger_torch import *
-
-        logger = Logger("logs", opt.logger)
+        logger = Logger("bck_check/tensorboard/", opt.logger, opt.name)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
@@ -72,17 +69,11 @@ if __name__ == "__main__":
 
     town = opt.town
 
-    if opt.debug_cuda:
-        debug_cuda("start")
-
     class_names = load_classes(data_config["names"])
 
     # Initiate model
     model = Darknet(opt.model_def).to(device)
     model.apply(weights_init_normal)
-
-    if opt.debug_cuda:
-        debug_cuda("model loaded")
 
     # If specified we start from checkpoint
     if opt.pretrained_weights:
@@ -90,9 +81,6 @@ if __name__ == "__main__":
             model.load_state_dict(torch.load(opt.pretrained_weights))
         else:
             model.load_darknet_weights(opt.pretrained_weights)
-
-    if opt.debug_cuda:
-        debug_cuda("weights loaded")
 
     # Get dataloader
     dataset = ListDataset(train_path, augment=not opt.overfit, multiscale=opt.multiscale_training, town=town)
@@ -105,11 +93,11 @@ if __name__ == "__main__":
         collate_fn=dataset.collate_fn,
     )
 
-    if opt.debug_cuda:
-        debug_cuda("dataset loaded")
+    # lr = opt.lr
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()))
+    # scheduler = ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
 
-    optimizer = torch.optim.Adam(model.parameters())
-
+    # filter(lambda p: p.requires_grad, model.parameters())
     metrics = [
         "grid_size",
         "loss",
@@ -129,11 +117,14 @@ if __name__ == "__main__":
 
     log_every = 10
     t_steps = 0
-    for epoch in range(opt.epochs):
+    average_steps = 30
+    loss_filtered = -1
+    for epoch in range(opt.start_epoch, opt.epochs):
         model.train()
+        model.set_backbone_grad(epoch >= opt.freeze_backbone_until)
+        logger.scalar_summary("params", model.get_active_params(), epoch)
+
         start_time = time.time()
-        if opt.debug_cuda:
-            debug_cuda("started epoch")
         for batch_i, (_, imgs, targets) in enumerate(dataloader):
             batches_done = len(dataloader) * epoch + batch_i
 
@@ -144,9 +135,11 @@ if __name__ == "__main__":
             if type(loss) == int:
                 continue
             loss.backward()
+            # loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
 
             if batches_done % opt.gradient_accumulations:
                 # Accumulates gradient before each step
+                # scheduler.step(loss_filtered)
                 optimizer.step()
                 optimizer.zero_grad()
 
@@ -222,8 +215,8 @@ if __name__ == "__main__":
             print(f"---- mAP {AP.mean()}")
 
             print("Running demo")
-            demo(model, logger, epoch_n=epoch)
+            demo(model, logger, epoch_n=epoch, img_size=opt.img_size)
 
         if epoch % opt.checkpoint_interval == 0:
             print("saving model")
-            torch.save(model.state_dict(), f"checkpoints/yolov3_ckpt_%d.pth" % epoch)
+            torch.save(model.state_dict(), f"checkpoints/yolov3_ckpt_{opt.name}_%d.pth" % epoch)

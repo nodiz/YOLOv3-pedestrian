@@ -246,6 +246,7 @@ class Darknet(nn.Module):
         self.img_size = img_size
         self.seen = 0
         self.header_info = np.array([0, 0, 0, self.seen, 0], dtype=np.int32)
+        self.backbone_grad = True
 
     def forward(self, x, targets=None):
         img_dim = x.shape[2]
@@ -347,3 +348,31 @@ class Darknet(nn.Module):
                 conv_layer.weight.data.cpu().numpy().tofile(fp)
 
         fp.close()
+
+    def active_backbone_grad(self, cutoff=75):
+        self.set_backbone_grad(self, True, cutoff)
+
+    def freeze_backbone_grad(self, cutoff=75):
+        self.set_backbone_grad(self, False, cutoff)
+
+    def set_backbone_grad(self, val, cutoff=75):
+        if self.backbone_grad == val:
+            return
+        else:
+            child_counter = 0
+            for child in self.children():
+                for subchild in child.children():
+                    if child_counter < cutoff:
+                        for subsubchild in subchild.children():
+                            for param in subsubchild.parameters():
+                                param.requires_grad = val
+                        child_counter += 1
+            self.backbone_grad = val
+
+
+    def get_active_params(self):
+        param_filtered = filter(lambda p: p.requires_grad, self.parameters())
+        total_params = sum([np.prod(p.size()) for p in self.parameters()])
+        filter_param = sum([np.prod(p.size()) for p in param_filtered])
+
+        return filter_param # , total_params
