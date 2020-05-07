@@ -17,7 +17,7 @@ from utils.datasets import *
 from utils.parse_config import *
 from utils.utils import *
 
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+# from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -93,11 +93,11 @@ if __name__ == "__main__":
         collate_fn=dataset.collate_fn,
     )
 
-    lr = opt.lr
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
-    # filter(lambda p: p.requires_grad, model.parameters())
-    scheduler = ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
+    # lr = opt.lr
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()))
+    # scheduler = ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
 
+    # filter(lambda p: p.requires_grad, model.parameters())
     metrics = [
         "grid_size",
         "loss",
@@ -135,11 +135,12 @@ if __name__ == "__main__":
             if type(loss) == int:
                 continue
             loss.backward()
-            loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
+            # loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
 
             if batches_done % opt.gradient_accumulations:
                 # Accumulates gradient before each step
-                scheduler.step(loss_filtered)
+                # scheduler.step(loss_filtered)
+                optimizer.step()
                 optimizer.zero_grad()
 
             # ----------------
