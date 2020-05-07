@@ -16,7 +16,7 @@ import json
 
 classes_dict = {
     "pedestrian": 0,
-  #  "rider": 1,
+    "rider": 0
   #  "person-group-far-away": 2,
 }
 
