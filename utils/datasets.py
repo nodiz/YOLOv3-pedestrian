@@ -91,7 +91,7 @@ class ImageFolder(Dataset):
 
 class ListDataset(Dataset):
     def __init__(self, folder_path, img_size=416, augment=True, multiscale=True, normalized_labels=True,
-                 ECP_PATH="/home/nodiz/dlav_project/data/ECP", town=""):
+                 ECP_PATH="/home/nodiz/dlav_project/data/ECP", town="", mean=[0.485, 0.456, 0.406], var=[0.2209, 0.224, 0.225]):
         #with open(list_path, "r") as file:
         #    self.img_files = file.readlines()
         assert folder_path in ["train", "val"]
@@ -111,6 +111,13 @@ class ListDataset(Dataset):
         self.min_size = self.img_size - 3 * 32
         self.max_size = self.img_size + 3 * 32
         self.batch_count = 0
+        self.mean = mean
+        self.var = var
+        self.transforms = transforms.Compose([
+            transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05, hue=0.05),
+            transforms.normalize(self.mean, self.var),
+        ])
+
 
     def __getitem__(self, index):
 
@@ -177,6 +184,7 @@ class ListDataset(Dataset):
 
         # Apply augmentations
         if self.augment:
+            img = self.transforms(img)
             if np.random.random() < 0.5:
                 img, targets = horisontal_flip(img, targets)
 
