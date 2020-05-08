@@ -137,7 +137,7 @@ if __name__ == "__main__":
             loss.backward()
             # loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
 
-            if batches_done % opt.gradient_accumulations:
+            if batches_done % opt.gradient_accumulations == 0:
                 # Accumulates gradient before each step
                 # scheduler.step(loss_filtered)
                 optimizer.step()
