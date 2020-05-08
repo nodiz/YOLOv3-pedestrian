@@ -139,15 +139,15 @@ class ListDataset(Dataset):
 
         # Extract image as PyTorch tensor
         img = Image.open(img_path).convert('RGB')
-        _, h, w = img.shape
+        _, h, w = np.array(img).shape
         # Handle images with less than three channels
-        if len(img.shape) != 3:
+        if len(np.array(img).shape) != 3:
             img = img.unsqueeze(0)
-            img = img.expand((3, img.shape[1:]))
+            img = img.expand((3, np.array(img).shape[1:]))
         h_factor, w_factor = (h, w) if self.normalized_labels else (1, 1)
         # Pad to square resolution
         img, pad = pad_to_square(img, 0)
-        _, padded_h, padded_w = img.shape
+        _, padded_h, padded_w = np.array(img).shape
 
         # ---------
         #  Label
