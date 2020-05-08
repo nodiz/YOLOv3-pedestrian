@@ -152,8 +152,8 @@ class ListDataset(Dataset):
         self.var = var
         self.transforms = transforms.Compose([
             transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05, hue=0.05),
-            transforms.ToTensor(),
             NewPad(),
+            transforms.ToTensor(),
             transforms.Resize((416, 416)),
             transforms.Normalize(self.mean, self.var),
         ])
