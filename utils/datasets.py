@@ -20,6 +20,7 @@ classes_dict = {
   #  "person-group-far-away": 2,
 }
 
+
 class bbox_rect(object):
     def __init__(self, s):
         self.x0, self.x1, self.y0, self.y1 = s['x0'], s['x1'], s['y0'], s['y1']
@@ -77,7 +78,7 @@ class ImageFolder(Dataset):
         self.mean = mean
         self.var = var
         self.transforms = transforms.Compose([
-            transforms.normalize(self.mean, self.var),
+            transforms.Normalize(self.mean, self.var),
         ])
 
     def __getitem__(self, index):
@@ -125,9 +126,8 @@ class ListDataset(Dataset):
         self.var = var
         self.transforms = transforms.Compose([
             transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05, hue=0.05),
-            transforms.normalize(self.mean, self.var),
+            transforms.Normalize(self.mean, self.var),
         ])
-
 
     def __getitem__(self, index):
 
