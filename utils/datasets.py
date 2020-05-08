@@ -151,10 +151,10 @@ class ListDataset(Dataset):
         self.mean = mean
         self.var = var
         self.transforms = transforms.Compose([
-            NewPad(),
-            transforms.Resize((416, 416)),
             transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05, hue=0.05),
             transforms.ToTensor(),
+            NewPad(),
+            transforms.Resize((416, 416)),
             transforms.Normalize(self.mean, self.var),
         ])
 
