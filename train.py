@@ -17,54 +17,58 @@ from utils.datasets import *
 from utils.parse_config import *
 from utils.utils import *
 
-# from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=100, help="number of epochs")
-    parser.add_argument("--batch_size", type=int, default=8, help="size of each image batch")
-    parser.add_argument("--gradient_accumulations", type=int, default=2, help="number of gradient accums before step")
+    # Model related
     parser.add_argument("--model_def", type=str, default="config/yolov3.cfg", help="path to model definition file")
     parser.add_argument("--data_config", type=str, default="config/custom.data", help="path to data config file")
     parser.add_argument("--pretrained_weights", type=str, help="if specified starts from checkpoint model")
-    parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
-    parser.add_argument("--checkpoint_interval", type=int, default=10, help="interval between saving model weights")
+    parser.add_argument("--checkpoint_interval", type=int, default=5, help="interval between saving model weights")
     parser.add_argument("--evaluation_interval", type=int, default=1, help="interval evaluations on validation set")
-    parser.add_argument("--compute_map", default=False, help="if True computes mAP every tenth batch")
-    parser.add_argument("--multiscale_training", default=True, help="allow for multi-scale training")
-    parser.add_argument("--logger", default=True, help="activate companion Tensorboard istance")
-    parser.add_argument("--town", type=str, default="", help="subset town to train on")
-    parser.add_argument("--overfit", default=False, help="eval on train?")
-    parser.add_argument("--metric", default=False, help="show metric table?")
-    parser.add_argument("--eval_batch_lim", type=int, default=50, help="number of batches to test on during eval")
+    # Training related
+    parser.add_argument("--epochs", type=int, default=100, help="number of epochs")
+    parser.add_argument("--batch_size", type=int, default=8, help="size of each image batch")
+    parser.add_argument("--gradient_accumulations", type=int, default=2, help="number of gradient accums before step")
+    parser.add_argument("--eval_batch_lim", type=int, default=50, help="limit number of batches to test during eval")
+    parser.add_argument("--freeze_backbone_until", type=int, default=0, help="freeze backbone for x first epochs")
     parser.add_argument("--lr", type=float, default=0.001, help="learning rate value")
+    parser.add_argument("--multiscale_training", default=True, help="allow for multi-scale training")
+    parser.add_argument("--compute_map", default=False, help="if True computes mAP every tenth batch")
+    parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
+    # Logger related
     parser.add_argument("--name", type=str, default="", help="run name")
-    parser.add_argument("--start_epoch", type=int, default=0, help="not done training?")
-    parser.add_argument("--freeze_backbone_until", type=int, default=0, help="freeze backbone for x first steps")
+    parser.add_argument("--logger", default=True, help="activate companion Tensorboard istance")
+    parser.add_argument("--metric", default=False, help="show metric table?")
+    parser.add_argument("--start_epoch", type=int, default=0, help= "Active not to mess with logs")
+    # ECP related
+    parser.add_argument("--ECP", type=int, default=1, help="Using ECP dataset?")
+    parser.add_argument("--data", type=str, default="data/", help="Dataset path (if ECP, the folder containing it)")
+    parser.add_argument("--town", type=str, default="", help="subset town to train on (ex: to = torin+toulose")
 
     opt = parser.parse_args()
 
     if opt.logger:
+        # Logger require to instance Tensorflow, we import it only if needed
         from utils.logger_torch import *
         logger = Logger("bck_check/tensorboard/", opt.logger, opt.name)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
-        torch.cuda.empty_cache()  # free some elves!
+        torch.cuda.empty_cache()  # free some memory if occupied
 
     os.makedirs("output", exist_ok=True)
     os.makedirs("checkpoints", exist_ok=True)
 
     # Get data configuration
-    data_config = parse_data_config(opt.data_config)
-    # train_path = data_config["train"]
-    # valid_path = data_config["valid"]
-    # for ECP
-    train_path = "train"
-    if opt.overfit:
-        valid_path = "train"
+    if not opt.ECP:
+        data_config = parse_data_config(opt.data_config)
+        train_path = data_config["train"]
+        valid_path = data_config["valid"]
     else:
+        train_path = "train"
         valid_path = "val"
 
     town = opt.town
@@ -93,18 +97,14 @@ if __name__ == "__main__":
         collate_fn=dataset.collate_fn,
     )
 
-    # lr = opt.lr
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()))
-    # scheduler = ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
+    # Define optimized (and scheduler)
+    lr = opt.lr
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+    scheduler = ReduceLROnPlateau(optimizer, patience=300, factor=0.33, verbose=True, min_lr=1e-9)
 
-    # filter(lambda p: p.requires_grad, model.parameters())
     metrics = [
         "grid_size",
         "loss",
-        "x",
-        "y",
-        "w",
-        "h",
         "conf",
         "cls",
         "cls_acc",
@@ -115,14 +115,13 @@ if __name__ == "__main__":
         "conf_noobj",
     ]
 
-    log_every = 10
-    t_steps = 0
-    average_steps = 30
-    loss_filtered = -1
+    log_every = 10  # update tensorboard every 10 steps
+    average_steps = 30  # moving average filter for loss function to scheduler
+    loss_filtered = -1  # starting value
     for epoch in range(opt.start_epoch, opt.epochs):
         model.train()
         model.set_backbone_grad(epoch >= opt.freeze_backbone_until)
-        logger.scalar_summary("params", model.get_active_params(), epoch)
+        # logger.scalar_summary("params", model.get_active_params(), epoch) # save # params with active grad
 
         start_time = time.time()
         for batch_i, (_, imgs, targets) in enumerate(dataloader):
@@ -133,13 +132,15 @@ if __name__ == "__main__":
 
             loss, outputs = model(imgs, targets)
             if type(loss) == int:
-                continue
+                continue  # skip when there were no target
             loss.backward()
-            # loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
+            loss_filtered = average_filter(loss_filtered, loss.item(), average_steps)
 
             if batches_done % opt.gradient_accumulations == 0:
                 # Accumulates gradient before each step
-                # scheduler.step(loss_filtered)
+                scheduler.step(loss_filtered)
+                if opt.logger:
+                    logger.scalar_summary("lr",optimizer.param_groups[0]['lr'], batches_done)
                 optimizer.step()
                 optimizer.zero_grad()
 
@@ -160,7 +161,7 @@ if __name__ == "__main__":
                     metric_table += [[metric, *row_metrics]]
 
                 # Tensorboard logging
-                if t_steps % log_every == 0:  # td change batch_i
+                if batches_done % log_every == 0:  # td change batch_i
                     tensorboard_log = []
                     for j, yolo in enumerate(model.yolo_layers):
                         for name, metric in yolo.metrics.items():
@@ -177,7 +178,6 @@ if __name__ == "__main__":
             epoch_batches_left = len(dataloader) - (batch_i + 1)
             time_left = datetime.timedelta(seconds=epoch_batches_left * (time.time() - start_time) / (batch_i + 1))
             log_str += f"\n---- ETA {time_left}"
-            t_steps += 1
 
             print(log_str)
 
@@ -190,10 +190,10 @@ if __name__ == "__main__":
                 model,
                 path=valid_path,
                 iou_thres=0.5,
-                conf_thres=0.5,
+                conf_thres=0.8,
                 nms_thres=0.5,
                 img_size=opt.img_size,
-                batch_size=24,
+                batch_size=16,
                 town=town,
                 batch_lim=opt.eval_batch_lim
             )

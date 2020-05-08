@@ -28,7 +28,7 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416,
          class_path="data/classes.names", imag_path="bck_check/images"):
 
     conf_thres = 0.8
-    nms_thres = 0.4
+    nms_thres = 0.5
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
