@@ -67,4 +67,4 @@ class GradualWarmupScheduler(_LRScheduler):
             else:
                 return super(GradualWarmupScheduler, self).step(epoch)
         else:
-            self.step_ReduceLROnPlateau(metrics, epoch)
+            self.step_ReduceLROnPlateau(metrics, n_step=epoch)

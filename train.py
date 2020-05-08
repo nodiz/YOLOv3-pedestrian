@@ -97,10 +97,10 @@ if __name__ == "__main__":
     )
 
     optimizer = SGD(filter(lambda p: p.requires_grad, model.parameters()), opt.lr, momentum=0.9, weight_decay=0.0001)
-    
+    print(f"pippo1")
     scheduler_RedLR = ReduceLROnPlateau(optimizer, patience=500, factor=0.3, verbose=True, min_lr=1e-8)
     scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_step=3000, after_scheduler=scheduler_RedLR)
-
+    print(f"pippo2")
     # filter(lambda p: p.requires_grad, model.parameters())
     metrics = [
         "grid_size",
@@ -125,6 +125,7 @@ if __name__ == "__main__":
 
         start_time = time.time()
         for batch_i, (_, imgs, targets) in enumerate(dataloader):
+            print(f"pippo3")
             batches_done = len(dataloader) * epoch + batch_i
 
             imgs = Variable(imgs.to(device))
@@ -142,7 +143,7 @@ if __name__ == "__main__":
                 logger.scalar_summary("loss_filtered", loss_filtered, batches_done)
                 logger.scalar_summary("lr", optimizer.param_groups[0]['lr'], batches_done)
             
-            if batches_done % opt.gradient_accumulations==0:
+            if batches_done % opt.gradient_accumulations == 0:
                 # Accumulates gradient before each step
                 print(f"train: step is {batches_done}")
                 print(f"loss: step is {loss_filtered}")

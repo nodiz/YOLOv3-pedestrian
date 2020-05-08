@@ -138,14 +138,12 @@ class ListDataset(Dataset):
         img_path = self.img_files[index % len(self.img_files)].rstrip()
 
         # Extract image as PyTorch tensor
-        img = transforms.ToTensor()(Image.open(img_path).convert('RGB'))
-
+        img = Image.open(img_path).convert('RGB')
+        _, h, w = img.shape
         # Handle images with less than three channels
         if len(img.shape) != 3:
             img = img.unsqueeze(0)
             img = img.expand((3, img.shape[1:]))
-
-        _, h, w = img.shape
         h_factor, w_factor = (h, w) if self.normalized_labels else (1, 1)
         # Pad to square resolution
         img, pad = pad_to_square(img, 0)
@@ -197,6 +195,8 @@ class ListDataset(Dataset):
             img = self.transforms(img)
             if np.random.random() < 0.5:
                 img, targets = horisontal_flip(img, targets)
+
+        img = transforms.ToTensor()(img)
 
         return img_path, img, targets
 
