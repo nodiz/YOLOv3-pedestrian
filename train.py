@@ -9,6 +9,8 @@ import torch
 from terminaltables import AsciiTable
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR, ExponentialLR
+from torch.optim.sgd import SGD
 
 from detect_train import demo
 from models import *
@@ -16,6 +18,7 @@ from test import evaluate
 from utils.datasets import *
 from utils.parse_config import *
 from utils.utils import *
+from utils.scheduler import GradualWarmupScheduler
 
 # from torch.optim.lr_scheduler import ReduceLROnPlateau
 
@@ -97,6 +100,16 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()))
     # scheduler = ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
 
+    
+    
+    #optimizer = torch.optim.Adam(model.parameters())
+    optimizer = SGD(model.parameters(), 0.1)
+   
+    
+    scheduler.step_ReduceLROnPlateau= ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
+    #target lr is achieved after total_epoch= 5
+    scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_step=7500, after_scheduler=scheduler_steplr)
+
     # filter(lambda p: p.requires_grad, model.parameters())
     metrics = [
         "grid_size",
@@ -137,9 +150,12 @@ if __name__ == "__main__":
             loss.backward()
             # loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
 
+            loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
+            
             if batches_done % opt.gradient_accumulations:
                 # Accumulates gradient before each step
-                # scheduler.step(loss_filtered)
+                scheduler.step_ReduceLROnPlateau(loss_filtered)
+                scheduler_warmup.step(epoch)
                 optimizer.step()
                 optimizer.zero_grad()
 

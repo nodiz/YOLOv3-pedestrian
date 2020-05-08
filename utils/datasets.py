@@ -70,9 +70,15 @@ def random_resize(images, min_size=288, max_size=448):
 
 
 class ImageFolder(Dataset):
-    def __init__(self, folder_path, img_size=416):
+    def __init__(self, folder_path, img_size=416, augment=True, mean=[0.485, 0.456, 0.406], var=[0.2209, 0.224, 0.225]):
         self.files = sorted(glob.glob("%s/*.*" % folder_path))
         self.img_size = img_size
+        self.augment = augment
+        self.mean = mean
+        self.var = var
+        self.transforms = transforms.Compose([
+            transforms.normalize(self.mean, self.var),
+        ])
 
     def __getitem__(self, index):
         img_path = self.files[index % len(self.files)]
@@ -83,6 +89,10 @@ class ImageFolder(Dataset):
         # Resize
         img = resize(img, self.img_size)
 
+        # Apply augmentations
+        if self.augment:
+            img = self.transforms(img)
+
         return img_path, img
 
     def __len__(self):
@@ -91,7 +101,7 @@ class ImageFolder(Dataset):
 
 class ListDataset(Dataset):
     def __init__(self, folder_path, img_size=416, augment=True, multiscale=True, normalized_labels=True,
-                 ECP_PATH="/home/nodiz/dlav_project/data/ECP", town=""):
+                 ECP_PATH="/home/nodiz/dlav_project/data/ECP", town="", mean=[0.485, 0.456, 0.406], var=[0.2209, 0.224, 0.225]):
         #with open(list_path, "r") as file:
         #    self.img_files = file.readlines()
         assert folder_path in ["train", "val"]
@@ -111,6 +121,13 @@ class ListDataset(Dataset):
         self.min_size = self.img_size - 3 * 32
         self.max_size = self.img_size + 3 * 32
         self.batch_count = 0
+        self.mean = mean
+        self.var = var
+        self.transforms = transforms.Compose([
+            transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05, hue=0.05),
+            transforms.normalize(self.mean, self.var),
+        ])
+
 
     def __getitem__(self, index):
 
@@ -177,6 +194,7 @@ class ListDataset(Dataset):
 
         # Apply augmentations
         if self.augment:
+            img = self.transforms(img)
             if np.random.random() < 0.5:
                 img, targets = horisontal_flip(img, targets)
 
