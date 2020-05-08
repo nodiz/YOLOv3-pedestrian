@@ -18,9 +18,9 @@ from test import evaluate
 from utils.datasets import *
 from utils.parse_config import *
 from utils.utils import *
-from utils.scheduler import GradualWarmupScheduler
 
-# from torch.optim.lr_scheduler import ReduceLROnPlateau
+from utils.scheduler import GradualWarmupScheduler
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("--overfit", default=False, help="eval on train?")
     parser.add_argument("--metric", default=False, help="show metric table?")
     parser.add_argument("--eval_batch_lim", type=int, default=50, help="number of batches to test on during eval")
-    parser.add_argument("--lr", type=float, default=0.001, help="learning rate value")
+    parser.add_argument("--lr", type=float, default=0.02, help="learning rate value")
     parser.add_argument("--name", type=str, default="", help="run name")
     parser.add_argument("--start_epoch", type=int, default=0, help="not done training?")
     parser.add_argument("--freeze_backbone_until", type=int, default=0, help="freeze backbone for x first steps")
@@ -96,28 +96,15 @@ if __name__ == "__main__":
         collate_fn=dataset.collate_fn,
     )
 
-    # lr = opt.lr
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()))
-    # scheduler = ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
-
+    optimizer = SGD(filter(lambda p: p.requires_grad, model.parameters()), opt.lr, momentum=0.9, weight_decay=0.0001)
     
-    
-    #optimizer = torch.optim.Adam(model.parameters())
-    optimizer = SGD(model.parameters(), 0.1)
-   
-    
-    scheduler.step_ReduceLROnPlateau= ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
-    #target lr is achieved after total_epoch= 5
-    scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_step=7500, after_scheduler=scheduler_steplr)
+    scheduler_RedLR = ReduceLROnPlateau(optimizer, patience=500, factor=0.3, verbose=True, min_lr=1e-8)
+    scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_step=3000, after_scheduler=scheduler_RedLR)
 
     # filter(lambda p: p.requires_grad, model.parameters())
     metrics = [
         "grid_size",
         "loss",
-        "x",
-        "y",
-        "w",
-        "h",
         "conf",
         "cls",
         "cls_acc",
@@ -135,7 +122,6 @@ if __name__ == "__main__":
     for epoch in range(opt.start_epoch, opt.epochs):
         model.train()
         model.set_backbone_grad(epoch >= opt.freeze_backbone_until)
-        logger.scalar_summary("params", model.get_active_params(), epoch)
 
         start_time = time.time()
         for batch_i, (_, imgs, targets) in enumerate(dataloader):
@@ -151,11 +137,14 @@ if __name__ == "__main__":
             # loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
 
             loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
+
+            if opt.logger:
+                logger.scalar_summary("loss_filtered", loss_filtered, batches_done)
+                logger.scalar_summary("lr", optimizer.param_groups[0]['lr'], batches_done)
             
             if batches_done % opt.gradient_accumulations:
                 # Accumulates gradient before each step
-                scheduler.step_ReduceLROnPlateau(loss_filtered)
-                scheduler_warmup.step(epoch)
+                scheduler_warmup.step(step=batches_done, metrics=loss_filtered)
                 optimizer.step()
                 optimizer.zero_grad()
 
