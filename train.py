@@ -61,10 +61,10 @@ if __name__ == "__main__":
 
     os.makedirs("output", exist_ok=True)
     os.makedirs("checkpoints", exist_ok=True)
-
+    data_config = parse_data_config(opt.data_config)
+    
     # Get data configuration
     if not opt.ECP:
-        data_config = parse_data_config(opt.data_config)
         train_path = data_config["train"]
         valid_path = data_config["valid"]
     else:
