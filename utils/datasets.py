@@ -70,9 +70,15 @@ def random_resize(images, min_size=288, max_size=448):
 
 
 class ImageFolder(Dataset):
-    def __init__(self, folder_path, img_size=416):
+    def __init__(self, folder_path, img_size=416, augment=True, mean=[0.485, 0.456, 0.406], var=[0.2209, 0.224, 0.225]):
         self.files = sorted(glob.glob("%s/*.*" % folder_path))
         self.img_size = img_size
+        self.augment = augment
+        self.mean = mean
+        self.var = var
+        self.transforms = transforms.Compose([
+            transforms.normalize(self.mean, self.var),
+        ])
 
     def __getitem__(self, index):
         img_path = self.files[index % len(self.files)]
@@ -82,6 +88,10 @@ class ImageFolder(Dataset):
         img, _ = pad_to_square(img, 0)
         # Resize
         img = resize(img, self.img_size)
+
+        # Apply augmentations
+        if self.augment:
+            img = self.transforms(img)
 
         return img_path, img
 
