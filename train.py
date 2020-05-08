@@ -9,6 +9,8 @@ import torch
 from terminaltables import AsciiTable
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR, ExponentialLR
+from torch.optim.sgd import SGD
 
 from detect_train import demo
 from models import *
@@ -16,6 +18,7 @@ from test import evaluate
 from utils.datasets import *
 from utils.parse_config import *
 from utils.utils import *
+from utils.scheduler import GradualWarmupScheduler
 
 
 def debug_cuda(where):
@@ -44,6 +47,7 @@ if __name__ == "__main__":
     parser.add_argument("--overfit", default=False, help="eval on train?")
     parser.add_argument("--metric", default=False, help="show metric table?")
     parser.add_argument("--eval_batch_lim", type=int, default=50, help="number of batches to test on during eval")
+    parser.add_argument("--lr", type=float, default=0.01, help="learning")
     opt = parser.parse_args()
     print(opt)
 
@@ -108,7 +112,14 @@ if __name__ == "__main__":
     if opt.debug_cuda:
         debug_cuda("dataset loaded")
 
-    optimizer = torch.optim.Adam(model.parameters())
+    
+    
+    #optimizer = torch.optim.Adam(model.parameters())
+    optimizer = SGD(model.parameters(), 0.1)
+    reduce_lr_at= 500
+    scheduler_steplr = ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
+    #target lr is achieved after total_epoch= 5
+    scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=5, after_scheduler=scheduler_steplr)
 
     metrics = [
         "grid_size",
@@ -145,8 +156,12 @@ if __name__ == "__main__":
                 continue
             loss.backward()
 
+            loss_filtered = average_filter(loss_filtered, loss.item(),average_steps)
+            
             if batches_done % opt.gradient_accumulations:
                 # Accumulates gradient before each step
+                scheduler.step_steplr(loss_filtered)
+                scheduler_warmup.step(epoch)
                 optimizer.step()
                 optimizer.zero_grad()
 
