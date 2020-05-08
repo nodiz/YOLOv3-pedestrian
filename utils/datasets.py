@@ -100,6 +100,32 @@ class ImageFolder(Dataset):
         return len(self.files)
 
 
+def get_padding(image):
+    w, h = image.size
+    max_wh = np.max([w, h])
+    h_padding = (max_wh - w) / 2
+    v_padding = (max_wh - h) / 2
+    l_pad = h_padding if h_padding % 1 == 0 else h_padding + 0.5
+    t_pad = v_padding if v_padding % 1 == 0 else v_padding + 0.5
+    r_pad = h_padding if h_padding % 1 == 0 else h_padding - 0.5
+    b_pad = v_padding if v_padding % 1 == 0 else v_padding - 0.5
+    padding = (int(l_pad), int(t_pad), int(r_pad), int(b_pad))
+    return padding
+
+
+class NewPad(object):
+    def __init__(self, fill=0, padding_mode='constant'):
+        self.fill = fill
+        self.padding_mode = padding_mode
+
+    def __call__(self, img):
+        return F.pad(img, get_padding(img), self.fill, self.padding_mode)
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(padding={0}, fill={1}, padding_mode={2})'. \
+            format(self.fill, self.padding_mode)
+
+
 class ListDataset(Dataset):
     def __init__(self, folder_path, img_size=416, augment=True, multiscale=True, normalized_labels=True,
                  ECP_PATH="/home/nodiz/dlav_project/data/ECP", town="", mean=[0.485, 0.456, 0.406], var=[0.2209, 0.224, 0.225]):
@@ -125,7 +151,10 @@ class ListDataset(Dataset):
         self.mean = mean
         self.var = var
         self.transforms = transforms.Compose([
+            NewPad(),
+            transforms.Resize((416, 416)),
             transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05, hue=0.05),
+            transforms.ToTensor(),
             transforms.Normalize(self.mean, self.var),
         ])
 
@@ -139,11 +168,13 @@ class ListDataset(Dataset):
 
         # Extract image as PyTorch tensor
         img = Image.open(img_path).convert('RGB')
-        _, h, w = np.array(img).shape
+        pippo, h, w = np.array(img).shape
+        print(f"Sizes {h}, {w}, {pippo}")
         # Handle images with less than three channels
-        if len(np.array(img).shape) != 3:
-            img = img.unsqueeze(0)
-            img = img.expand((3, np.array(img).shape[1:]))
+        # if len(np.array(img).shape) != 3:
+        # img = img.unsqueeze(0)
+        # img = img.expand((3, np.array(img).shape[1:]))
+
         h_factor, w_factor = (h, w) if self.normalized_labels else (1, 1)
         # Pad to square resolution
         img, pad = pad_to_square(img, 0)
