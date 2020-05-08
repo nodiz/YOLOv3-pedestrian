@@ -116,10 +116,11 @@ if __name__ == "__main__":
     
     #optimizer = torch.optim.Adam(model.parameters())
     optimizer = SGD(model.parameters(), 0.1)
-    reduce_lr_at= 500
-    scheduler_steplr = ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
+   
+    
+    scheduler.step_ReduceLROnPlateau= ReduceLROnPlateau(optimizer, patience=500, factor=0.1, verbose=True, min_lr=1e-9)
     #target lr is achieved after total_epoch= 5
-    scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=5, after_scheduler=scheduler_steplr)
+    scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_step=7500, after_scheduler=scheduler_steplr)
 
     metrics = [
         "grid_size",
@@ -160,7 +161,7 @@ if __name__ == "__main__":
             
             if batches_done % opt.gradient_accumulations:
                 # Accumulates gradient before each step
-                scheduler.step_steplr(loss_filtered)
+                scheduler.step_ReduceLROnPlateau(loss_filtered)
                 scheduler_warmup.step(epoch)
                 optimizer.step()
                 optimizer.zero_grad()
