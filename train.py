@@ -142,8 +142,10 @@ if __name__ == "__main__":
                 logger.scalar_summary("loss_filtered", loss_filtered, batches_done)
                 logger.scalar_summary("lr", optimizer.param_groups[0]['lr'], batches_done)
             
-            if batches_done % opt.gradient_accumulations:
+            if batches_done % opt.gradient_accumulations==0:
                 # Accumulates gradient before each step
+                print(f"train: step is {batches_done}")
+                print(f"loss: step is {loss_filtered}")
                 scheduler_warmup.step(step=batches_done, metrics=loss_filtered)
                 optimizer.step()
                 optimizer.zero_grad()
