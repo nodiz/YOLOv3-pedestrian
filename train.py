@@ -122,7 +122,7 @@ if __name__ == "__main__":
     ]
 
     log_every = 10  # update tensorboard every 10 steps
-    average_steps = 30  # moving average filter for loss function to scheduler
+    average_steps = 10  # moving average filter for loss function to scheduler
     loss_filtered = -1  # starting value
     for epoch in range(opt.start_epoch, opt.epochs):
         model.train()
@@ -185,12 +185,12 @@ if __name__ == "__main__":
                 log_str += AsciiTable(metric_table).table
                 log_str += "\n"
 
-            log_str += f"Total loss {loss.item()}"
+            log_str += f"Total loss {loss.item()}\n"
             # Determine approximate time left for epoch
             epoch_batches_left = len(dataloader) - (batch_i + 1)
             time_left = datetime.timedelta(seconds=epoch_batches_left * (time.time() - start_time) / (batch_i + 1))
-            log_str += f"Lr - {optimizer.param_groups[0]['lr']}\n" \
-                       f"Loss_filtered {loss_filtered}"
+            log_str += f"Loss_filtered {loss_filtered}\n"\
+                       f"Lr - {optimizer.param_groups[0]['lr']}"
             log_str += f"\n---- ETA {time_left}"
 
             print(log_str)
