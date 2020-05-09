@@ -110,7 +110,7 @@ if __name__ == "__main__":
         optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), opt.lr, momentum=0.9,
                         weight_decay=0.0001)
         scheduler_RedLR = ReduceLROnPlateau(optimizer, patience=500, factor=0.3, verbose=True, min_lr=1e-8)
-        scheduler = GradualWarmupScheduler(optimizer, multiplier=1, total_step=3000,
+        scheduler = GradualWarmupScheduler(optimizer, multiplier=1, total_step=500,
                                                   after_scheduler=scheduler_RedLR)
 
     metrics = [

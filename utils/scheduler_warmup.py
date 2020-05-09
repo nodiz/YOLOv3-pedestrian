@@ -23,6 +23,7 @@ class GradualWarmupScheduler(_LRScheduler):
         self.total_step = total_step
         self.after_scheduler = after_scheduler
         self.finished = False
+        self.last_step = 0
         super(GradualWarmupScheduler, self).__init__(optimizer)
 
     def get_lr(self):
@@ -42,7 +43,8 @@ class GradualWarmupScheduler(_LRScheduler):
 
     def step_ReduceLROnPlateau(self, metrics, step=None):
         if step is None:
-            step = self.last_step + 1
+            step = self.last_step+1
+        print(f"step is {step}")
         self.last_step = step if step != 0 else 1  # ReduceLROnPlateau is called at the end of step, whereas others are called at beginning
         if self.last_step <= self.total_step:
             warmup_lr = [base_lr * ((self.multiplier - 1.) * self.last_step / self.total_step + 1.) for base_lr in
@@ -51,9 +53,9 @@ class GradualWarmupScheduler(_LRScheduler):
                 param_group['lr'] = lr
         else:
             if step is None:
-                self.after_scheduler.step(metrics, None)
+                self.after_scheduler.step(metrics)
             else:
-                self.after_scheduler.step(metrics, step - self.total_step)
+                self.after_scheduler.step(metrics)
 
     def step(self, step=None, metrics=None):
         if type(self.after_scheduler) != ReduceLROnPlateau:
