@@ -44,7 +44,6 @@ class GradualWarmupScheduler(_LRScheduler):
     def step_ReduceLROnPlateau(self, metrics, step=None):
         if step is None:
             step = self.last_step+1
-        print(f"step is {step}")
         self.last_step = step if step != 0 else 1  # ReduceLROnPlateau is called at the end of step, whereas others are called at beginning
         if self.last_step <= self.total_step:
             if self.multiplier == 1.0:

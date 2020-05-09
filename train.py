@@ -74,8 +74,6 @@ if __name__ == "__main__":
         train_path = "train"
         valid_path = "val"
 
-    town = opt.town
-
     class_names = load_classes(data_config["names"])
 
     # Initiate model
@@ -90,7 +88,7 @@ if __name__ == "__main__":
             model.load_darknet_weights(opt.pretrained_weights)
 
     # Get dataloader
-    dataset = ListDataset(train_path, augment=True, multiscale=opt.multiscale_training, town=town)
+    dataset = ListDataset(train_path, augment=True, multiscale=opt.multiscale_training, town=opt.town, ecp=opt.ECP)
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=opt.batch_size,
@@ -107,7 +105,7 @@ if __name__ == "__main__":
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
         scheduler = ReduceLROnPlateau(optimizer, patience=300, factor=0.33, verbose=True, min_lr=1e-9)
     else:
-        optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), opt.lr, momentum=0.9,
+        optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), opt.lr,
                         weight_decay=0.0001)
         scheduler_RedLR = ReduceLROnPlateau(optimizer, patience=500, factor=0.3, verbose=True, min_lr=1e-8)
         scheduler = GradualWarmupScheduler(optimizer, multiplier=1, total_step=500,
@@ -148,12 +146,13 @@ if __name__ == "__main__":
                 # Accumulates gradient before each step
                 if opt.optim == "sgd":
                     scheduler.step(step=batches_done, metrics=loss_filtered)
+                    #  clipping exploding gradient to 25
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 25)
                 else:
                     scheduler.step(loss_filtered)
 
                 logger.scalar_summary("loss_filtered", loss_filtered, batches_done)
                 logger.scalar_summary("lr", optimizer.param_groups[0]['lr'], batches_done)
-                print(f"lr - {optimizer.param_groups[0]['lr']}\tloss_filtered {loss_filtered}")
                 optimizer.step()
                 optimizer.zero_grad()
 
@@ -190,6 +189,8 @@ if __name__ == "__main__":
             # Determine approximate time left for epoch
             epoch_batches_left = len(dataloader) - (batch_i + 1)
             time_left = datetime.timedelta(seconds=epoch_batches_left * (time.time() - start_time) / (batch_i + 1))
+            log_str += f"Lr - {optimizer.param_groups[0]['lr']}\n" \
+                       f"Loss_filtered {loss_filtered}"
             log_str += f"\n---- ETA {time_left}"
 
             print(log_str)
@@ -207,7 +208,8 @@ if __name__ == "__main__":
                 nms_thres=0.5,
                 img_size=opt.img_size,
                 batch_size=16,
-                town=town,
+                town=opt.town,
+                ecp=opt.ECP,
                 batch_lim=opt.eval_batch_lim
             )
             evaluation_metrics = [

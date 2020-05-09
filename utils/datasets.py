@@ -91,12 +91,15 @@ class ImageFolder(Dataset):
 
 class ListDataset(Dataset):
     def __init__(self, folder_path, img_size=416, augment=True, multiscale=True, normalized_labels=True,
-                 ECP_PATH="/home/nodiz/dlav_project/data/ECP", town=""):
-        #with open(list_path, "r") as file:
+                 path="data/", ecp=1, town=""):
+        # with open(list_path, "r") as file:
         #    self.img_files = file.readlines()
-        assert folder_path in ["train", "val"]
 
-        self.img_files = sorted(glob.glob("{}/day/img/{}/{}*/*.*".format(ECP_PATH,folder_path, town)))
+        if ecp:
+            assert folder_path in ["train", "val"]
+            self.img_files = sorted(glob.glob("{}/ECP/day/img/{}/{}*/*.*".format(path,folder_path, town)))
+        else:
+            self.img_files = sorted(glob.glob("{}/{}/img/*.*".format(path, folder_path)))
 
         self.label_files = [
             path.replace("img", "labels").replace(".png", ".json").replace(".jpg", ".json")
