@@ -17,6 +17,7 @@ from utils.datasets import *
 from utils.parse_config import *
 from utils.utils import *
 
+from utils.scheduler_warmup import GradualWarmupScheduler
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 if __name__ == "__main__":
@@ -28,13 +29,14 @@ if __name__ == "__main__":
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
     parser.add_argument("--checkpoint_interval", type=int, default=5, help="interval between saving model weights")
     parser.add_argument("--evaluation_interval", type=int, default=1, help="interval evaluations on validation set")
+    parser.add_argument("--optim", type=str, default="sgd", help="optim")
     # Training related
     parser.add_argument("--epochs", type=int, default=100, help="number of epochs")
     parser.add_argument("--batch_size", type=int, default=8, help="size of each image batch")
     parser.add_argument("--gradient_accumulations", type=int, default=2, help="number of gradient accums before step")
     parser.add_argument("--eval_batch_lim", type=int, default=50, help="limit number of batches to test during eval")
     parser.add_argument("--freeze_backbone_until", type=int, default=0, help="freeze backbone for x first epochs")
-    parser.add_argument("--lr", type=float, default=0.001, help="learning rate value")
+    parser.add_argument("--lr", type=float, default=0.02, help="learning rate value")
     parser.add_argument("--multiscale_training", default=True, help="allow for multi-scale training")
     parser.add_argument("--compute_map", default=False, help="if True computes mAP every tenth batch")
     parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
@@ -47,6 +49,7 @@ if __name__ == "__main__":
     parser.add_argument("--ECP", type=int, default=1, help="Using ECP dataset?")
     parser.add_argument("--data", type=str, default="data/", help="Dataset path (if ECP, the folder containing it)")
     parser.add_argument("--town", type=str, default="", help="subset town to train on (ex: to = torin+toulose")
+
 
     opt = parser.parse_args()
 
@@ -61,17 +64,15 @@ if __name__ == "__main__":
 
     os.makedirs("output", exist_ok=True)
     os.makedirs("checkpoints", exist_ok=True)
+    data_config = parse_data_config(opt.data_config)
 
     # Get data configuration
     if not opt.ECP:
-        data_config = parse_data_config(opt.data_config)
         train_path = data_config["train"]
         valid_path = data_config["valid"]
     else:
         train_path = "train"
         valid_path = "val"
-
-    town = opt.town
 
     class_names = load_classes(data_config["names"])
 
@@ -87,7 +88,7 @@ if __name__ == "__main__":
             model.load_darknet_weights(opt.pretrained_weights)
 
     # Get dataloader
-    dataset = ListDataset(train_path, augment=not opt.overfit, multiscale=opt.multiscale_training, town=town)
+    dataset = ListDataset(train_path, augment=True, multiscale=opt.multiscale_training, town=opt.town, ecp=opt.ECP)
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=opt.batch_size,
@@ -98,25 +99,30 @@ if __name__ == "__main__":
     )
 
     # Define optimized (and scheduler)
+    assert opt.optim in ["adam", "sgd"]
     lr = opt.lr
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
-    scheduler = ReduceLROnPlateau(optimizer, patience=300, factor=0.33, verbose=True, min_lr=1e-9)
+    if opt.optim == "adam":
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+        scheduler = ReduceLROnPlateau(optimizer, patience=300, factor=0.33, verbose=True, min_lr=1e-9)
+    else:
+        optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), opt.lr,
+                        weight_decay=0.0001)
+        scheduler_RedLR = ReduceLROnPlateau(optimizer, patience=500, factor=0.3, verbose=True, min_lr=1e-8)
+        scheduler = GradualWarmupScheduler(optimizer, multiplier=1, total_step=500,
+                                                  after_scheduler=scheduler_RedLR)
 
     metrics = [
         "grid_size",
         "loss",
         "conf",
-        "cls",
-        "cls_acc",
         "recall50",
-        "recall75",
         "precision",
         "conf_obj",
         "conf_noobj",
     ]
 
     log_every = 10  # update tensorboard every 10 steps
-    average_steps = 30  # moving average filter for loss function to scheduler
+    average_steps = 10  # moving average filter for loss function to scheduler
     loss_filtered = -1  # starting value
     for epoch in range(opt.start_epoch, opt.epochs):
         model.train()
@@ -138,9 +144,15 @@ if __name__ == "__main__":
 
             if batches_done % opt.gradient_accumulations == 0:
                 # Accumulates gradient before each step
-                scheduler.step(loss_filtered)
-                if opt.logger:
-                    logger.scalar_summary("lr",optimizer.param_groups[0]['lr'], batches_done)
+                if opt.optim == "sgd":
+                    scheduler.step(step=batches_done, metrics=loss_filtered)
+                    #  clipping exploding gradient to 25
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 25)
+                else:
+                    scheduler.step(loss_filtered)
+
+                logger.scalar_summary("loss_filtered", loss_filtered, batches_done)
+                logger.scalar_summary("lr", optimizer.param_groups[0]['lr'], batches_done)
                 optimizer.step()
                 optimizer.zero_grad()
 
@@ -173,10 +185,12 @@ if __name__ == "__main__":
                 log_str += AsciiTable(metric_table).table
                 log_str += "\n"
 
-            log_str += f"Total loss {loss.item()}"
+            log_str += f"Total loss {loss.item()}\n"
             # Determine approximate time left for epoch
             epoch_batches_left = len(dataloader) - (batch_i + 1)
             time_left = datetime.timedelta(seconds=epoch_batches_left * (time.time() - start_time) / (batch_i + 1))
+            log_str += f"Loss_filtered {loss_filtered}\n"\
+                       f"Lr - {optimizer.param_groups[0]['lr']}"
             log_str += f"\n---- ETA {time_left}"
 
             print(log_str)
@@ -194,7 +208,8 @@ if __name__ == "__main__":
                 nms_thres=0.5,
                 img_size=opt.img_size,
                 batch_size=16,
-                town=town,
+                town=opt.town,
+                ecp=opt.ECP,
                 batch_lim=opt.eval_batch_lim
             )
             evaluation_metrics = [
