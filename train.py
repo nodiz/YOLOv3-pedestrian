@@ -117,10 +117,7 @@ if __name__ == "__main__":
         "grid_size",
         "loss",
         "conf",
-        "cls",
-        "cls_acc",
         "recall50",
-        "recall75",
         "precision",
         "conf_obj",
         "conf_noobj",
@@ -154,8 +151,9 @@ if __name__ == "__main__":
                 else:
                     scheduler.step(loss_filtered)
 
-                    logger.scalar_summary("loss_filtered", loss_filtered, batches_done)
-                    logger.scalar_summary("lr", optimizer.param_groups[0]['lr'], batches_done)
+                logger.scalar_summary("loss_filtered", loss_filtered, batches_done)
+                logger.scalar_summary("lr", optimizer.param_groups[0]['lr'], batches_done)
+                print(f"lr - {optimizer.param_groups[0]['lr']}\tloss_filtered {loss_filtered}")
                 optimizer.step()
                 optimizer.zero_grad()
 
