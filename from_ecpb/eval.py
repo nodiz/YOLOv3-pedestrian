@@ -121,13 +121,15 @@ def evaluate_detection(results_path, det_path, gt_path, det_method_name, eval_ty
     print(['reasonable', 'small', 'occluded', 'all'], results)
 
 
-def eval(time='day', mode='val', eval_type='pedestrian', det_path=None):
+def eval(time='day', mode='val', eval_type='pedestrian', det_path=None, gt_path=None):
     assert time in ['day', 'night']
     assert mode in ['val', 'test']
 
-    gt_path = './data/ECP/{}/labels/{}'.format(time, mode)
+    if gt_path is None:
+        gt_path = './data/ECP/{}/labels/{}'.format(time, mode)
     if det_path is None:
         det_path = './data/mock_detections/{}/{}'.format(time, mode)
+
     det_method_name = 'Yolov3'
 
     # folder where you find all the results (unless you change other paths...)
