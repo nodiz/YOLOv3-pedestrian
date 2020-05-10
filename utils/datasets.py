@@ -73,7 +73,7 @@ class ImageFolder(Dataset):
     def __init__(self, folder_path, img_size=416,
                  dataset="", folder_scope="val", folder_town=""):
         if dataset == "ECP":
-            self.img_files = sorted(glob.glob("{}/ECP/day/img/{}/{}*/*.*".format(folder_path,folder_scope,folder_town)))
+            self.files = sorted(glob.glob("{}/ECP/day/img/{}/{}*/*.*".format(folder_path,folder_scope,folder_town)))
         else:
             self.files = sorted(glob.glob("%s/*.*" % folder_path))
         self.img_size = img_size
