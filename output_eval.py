@@ -83,7 +83,7 @@ if __name__ == "__main__":
     imgs = []  # Stores image paths
     img_detections = []  # Stores detections for each image index
 
-    print("\nPerforming object detection:")
+    print("\nPerforming object detection")
     prev_time = time.time()
     for batch_i, (img_paths, input_imgs) in enumerate(tqdm.tqdm(dataloader)):
         # Configure input
@@ -98,13 +98,11 @@ if __name__ == "__main__":
         current_time = time.time()
         inference_time = datetime.timedelta(seconds=current_time - prev_time)
         prev_time = current_time
-        print("\t+ Batch %d, Inference Time: %s" % (batch_i, inference_time))
 
         # Save image and detections
         imgs.extend(img_paths)
         img_detections.extend(detections)
 
-        print("\nSaving json:")
         # Iterate through images and save plot of detections
         for img_i, (path, detections) in enumerate(zip(imgs, img_detections)):
 
