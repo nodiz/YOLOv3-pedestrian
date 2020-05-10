@@ -6,6 +6,11 @@ A minimal PyTorch implementation of YOLOv3, with support for training, inference
 
 Requirement are detailed in requirement.txt
 
+This repository is mantained for:
+* Python: 3.7
+* Pytorch: 1.4
+* CUDA: 10.1
+
 ##### Download pretrained weights
 
 Pretrained weights and our model can be found there: 
