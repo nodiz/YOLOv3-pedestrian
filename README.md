@@ -30,20 +30,20 @@ TODO add pipeline to readme
 
 ## Train
 ```
-$ train.py [-h] [--epochs EPOCHS] [--batch_size BATCH_SIZE]
-                [--gradient_accumulations GRADIENT_ACCUMULATIONS]
-                [--model_def MODEL_DEF] [--data_config DATA_CONFIG]
-                [--pretrained_weights PRETRAINED_WEIGHTS] [--n_cpu N_CPU]
-                [--img_size IMG_SIZE]
+$ train.py [-h] [--epochs EPOCHS][--batch_size BATCH_SIZE]
+                [--gradient_accumulations N_ACCUMULATIONS]
+                [--model_def MODEL_DEF][--data_config CONFIG]
+                [--pretrained_weights PRETRAINED_WEIGHTS] 
+                [--img_size IMG_SIZE][--n_cpu N_CPU]
                 [--checkpoint_interval CHECKPOINT_INTERVAL]
                 [--evaluation_interval EVALUATION_INTERVAL]
-                [--compute_map COMPUTE_MAP] [--ECP BOOL] 
+                [--compute_map COMPUTE_MAP][--ECP BOOL] 
                 [--multiscale_training MULTISCALE_TRAINING]
-                [--optim OPTIM] [eval_batch_lim LIM] 
-                [--freeze_backbone_until EPOCHS] [--lr LR]
-                [--name SESSION] [--start_epoch EPOCH]
-                [--logger BOOL] [--metric BOOL]
-                [--data DATAPATH] [--town SUBSET] 
+                [--optim OPTIM][eval_batch_lim LIM] 
+                [--freeze_backbone_until EPOCHS][--lr LR]
+                [--name SESSION][--start_epoch EPOCH]
+                [--logger BOOL][--metric BOOL]
+                [--data DATAPATH][--town SUBSET] 
                
 ```
 
@@ -82,7 +82,7 @@ Track training progress in Tensorboard:
 
 ```
 $ tensorboard --logdir='logs' --port=6006
-$ tensorboard --logdir='tensorboard' --port=6006 --host 0.0.0.0 (if from cloud)
+$ tensorboard --logdir='logs' --port=6006 --host 0.0.0.0 (if from cloud)
 ```
 
 Tensorboard will instantiate a different log for every run thanks to the parameter --name.
