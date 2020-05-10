@@ -1,6 +1,6 @@
 import os
-
 import statistics
+
 from dataloader import load_data_ecp
 from match import Evaluator, Result, compare_all
 from params import ParamsFactory, IoU
@@ -46,14 +46,14 @@ def create_evaluator(data, difficulty, ignore_other_vru, type='pedestrian'):
         assert False, 'Evaluation type not supported'
 
     return Evaluator(data,
-                      metric=IoU,
-                      comparable_identities=compare_all,
-                      ignore_gt=params.ignore_gt,
-                      skip_gt=params.skip_gt,
-                      skip_det=params.skip_det,
-                      preprocess_gt=params.preprocess_gt,
-                      preprocess_det=params.preprocess_det,
-                      allow_multiple_matches=False)
+                     metric=IoU,
+                     comparable_identities=compare_all,
+                     ignore_gt=params.ignore_gt,
+                     skip_gt=params.skip_gt,
+                     skip_det=params.skip_det,
+                     preprocess_gt=params.preprocess_gt,
+                     preprocess_det=params.preprocess_det,
+                     allow_multiple_matches=False)
 
 
 def evaluate(difficulty, ignore_other_vru, results_path, det_path, gt_path, det_method_name,
@@ -66,10 +66,10 @@ def evaluate(difficulty, ignore_other_vru, results_path, det_path, gt_path, det_
                                                                              difficulty, eval_type))
 
     if os.path.exists(pkl_path) and use_cache:
-        print '# # # # # # # # # # # # # # # # # # # --- NOTE --- # # # # # # # # # # # # # # #'
-        print 'Using cached result for "{}".'.format(det_path)
-        print 'Cache file: {}'.format(pkl_path)
-        print '# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #'
+        print('# # # # # # # # # # # # # # # # # # # --- NOTE --- # # # # # # # # # # # # # # #')
+        print('Using cached result for "{}".'.format(det_path))
+        print('Cache file: {}'.format(pkl_path))
+        print('# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #')
         result = Result.load_from_disc(pkl_path)
     else:
         data = load_data_ecp(gt_path, det_path)
@@ -88,42 +88,49 @@ def evaluate(difficulty, ignore_other_vru, results_path, det_path, gt_path, det_
     fig.savefig(os.path.join(results_path, '{}.pdf'.format(filename)))  # vector graphic
     fig.savefig(os.path.join(results_path, '{}.png'.format(filename)))  # png
 
-    print '# ----------------------------------------------------------------- #'
-    print 'Finished evaluation of ' + det_method_name
-    print 'difficulty={}, ignore_other_vru={}, evaltype={}'.format(difficulty, ignore_other_vru,
-                                                                   eval_type)
-    print '---'
-    print 'Log-Avg Miss Rate (caltech reference implementation): ', \
-        mr_fppi.log_avg_mr_reference_implementation()
-    print '-'
-    print 'Processed number of frames: ', result.nof_imgs
-    print 'Number of ignored ground truth annotations: ', \
-        len(result.gts_including_ignored) - len(result.gts)
-    print 'Number of skipped ground truth annotations: ', result.skipped_gts['count']
-    print 'Classes of skipped ground truth annotations: ', list(result.skipped_gts['types'])
-    print 'Number of skipped detections: ', result.skipped_dets['count']
-    print 'Classes of skipped detections: ', list(result.skipped_dets['types'])
-    print '# ----------------------------------------------------------------- #'
-    print ''
+    print('# ----------------------------------------------------------------- #')
+    print('Finished evaluation of ' + det_method_name)
+    print('difficulty={}, ignore_other_vru={}, evaltype={}'.format(difficulty, ignore_other_vru,
+                                                                   eval_type))
+    print('---')
+    print('Log-Avg Miss Rate (caltech reference implementation): ',
+          mr_fppi.log_avg_mr_reference_implementation())
+    print('-')
+    print('Processed number of frames: ', result.nof_imgs)
+    print('Number of ignored ground truth annotations: ',
+          len(result.gts_including_ignored) - len(result.gts))
+    print('Number of skipped ground truth annotations: ', result.skipped_gts['count'])
+    print('Classes of skipped ground truth annotations: ', list(result.skipped_gts['types']))
+    print('Number of skipped detections: ', result.skipped_dets['count'])
+    print('Classes of skipped detections: ', list(result.skipped_dets['types']))
+    print('# ----------------------------------------------------------------- #')
+    print('')
+    return mr_fppi.log_avg_mr_reference_implementation()
 
 
 def evaluate_detection(results_path, det_path, gt_path, det_method_name, eval_type='pedestrian'):
-    print 'Start evaluation for {}'.format(det_method_name)
+    print('Start evaluation for {}'.format(det_method_name))
+    results = []
     for difficulty in ['reasonable', 'small', 'occluded', 'all']:
         # False is the default case used by the benchmark server,
         # use [True, False] if you want to compare the enforce with the ignore setting
         for ignore_other_vru in [True, False]:
-            evaluate(difficulty, ignore_other_vru, results_path, det_path, gt_path, det_method_name,
-                     use_cache=False, eval_type=eval_type)
+            result = evaluate(difficulty, ignore_other_vru, results_path, det_path, gt_path, det_method_name,
+                              use_cache=False, eval_type=eval_type)
+            results.append(result)
+    print(['reasonable', 'small', 'occluded', 'all'], results)
 
 
-def eval(time='day', mode='val', eval_type='pedestrian'):
+def eval(time='day', mode='val', eval_type='pedestrian', det_path=None, gt_path=None):
     assert time in ['day', 'night']
     assert mode in ['val', 'test']
 
-    gt_path = './data/{}/labels/{}'.format(time, mode)
-    det_path = './data/mock_detections/{}/{}'.format(time, mode)
-    det_method_name = 'Faster R-CNN'
+    if gt_path is None:
+        gt_path = './data/ECP/{}/labels/{}'.format(time, mode)
+    if det_path is None:
+        det_path = './data/mock_detections/{}/{}'.format(time, mode)
+
+    det_method_name = 'Yolov3'
 
     # folder where you find all the results (unless you change other paths...)
     results_path = os.path.abspath('./results')
@@ -131,14 +138,14 @@ def eval(time='day', mode='val', eval_type='pedestrian'):
         os.makedirs(results_path)
 
     evaluate_detection(results_path, det_path, gt_path, det_method_name, eval_type)
-    print ''
-    print '# -----------------------------------------------------------------'
-    print 'Finished evaluation, results can be found here: {}'.format(results_path)
-    print '# -----------------------------------------------------------------'
-
+    print('')
+    print('# -----------------------------------------------------------------')
+    print('Finished evaluation, results can be found here: {}'.format(results_path))
+    print('# -----------------------------------------------------------------')
 
     import matplotlib.pyplot as plt
     plt.show()  # comment this if you don't want plots to pop up
+
 
 if __name__ == "__main__":
     eval(time='day', mode='val', eval_type='pedestrian')

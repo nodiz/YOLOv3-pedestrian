@@ -70,8 +70,12 @@ def random_resize(images, min_size=288, max_size=448):
 
 
 class ImageFolder(Dataset):
-    def __init__(self, folder_path, img_size=416):
-        self.files = sorted(glob.glob("%s/*.*" % folder_path))
+    def __init__(self, folder_path, img_size=416,
+                 dataset="", folder_scope="val", folder_town=""):
+        if dataset == "ECP":
+            self.files = sorted(glob.glob("{}/ECP/day/img/{}/{}*/*.*".format(folder_path,folder_scope,folder_town)))
+        else:
+            self.files = sorted(glob.glob("%s/*.*" % folder_path))
         self.img_size = img_size
 
     def __getitem__(self, index):

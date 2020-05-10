@@ -25,7 +25,7 @@ from utils.logger_torch import *
 
 
 def demo(model, logger, epoch_n, path="data/samples", img_size=416,
-         class_path="data/classes.names", imag_path="bck_check/images"):
+         class_path="data/classes.names", imag_path="misc/images"):
 
     conf_thres = 0.8
     nms_thres = 0.5
@@ -36,7 +36,7 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416,
     model.eval()  # Set in evaluation mode
 
     dataloader = DataLoader(
-        ImageFolder(path, img_size=img_size),
+        ImageFolder(path, img_size=img_size, dataset=""),
         batch_size=1,
         shuffle=False,
         num_workers=1,
@@ -86,7 +86,7 @@ def demo(model, logger, epoch_n, path="data/samples", img_size=416,
         # Draw bounding boxes and labels of detections
         if detections is not None:
             # Rescale boxes to original image
-            detections = rescale_boxes(detections, img_size, img.shape[:2])
+            detections = rescale_boxes(detections, img_size, 1920)
             unique_labels = detections[:, -1].cpu().unique()
             n_cls_preds = len(unique_labels)
             bbox_colors = random.sample(colors, n_cls_preds)
