@@ -44,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument("--name", type=str, default="", help="run name")
     parser.add_argument("--logger", default=True, help="activate companion Tensorboard istance")
     parser.add_argument("--metric", default=False, help="show metric table?")
-    parser.add_argument("--start_epoch", type=int, default=0, help= "Active not to mess with logs")
+    parser.add_argument("--start_epoch", type=int, default=0, help="Active not to mess with logs")
     # ECP related
     parser.add_argument("--ECP", type=int, default=1, help="Using ECP dataset?")
     parser.add_argument("--data", type=str, default="data/", help="Dataset path (if ECP, the folder containing it)")
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     if opt.logger:
         # Logger require to instance Tensorflow, we import it only if needed
         from utils.logger_torch import *
-        logger = Logger("bck_check/tensorboard/", opt.logger, opt.name)
+        logger = Logger("logs/", opt.logger, opt.name)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
@@ -204,7 +204,7 @@ if __name__ == "__main__":
                 model,
                 path=valid_path,
                 iou_thres=0.5,
-                conf_thres=0.8,
+                conf_thres=0.95,
                 nms_thres=0.5,
                 img_size=opt.img_size,
                 batch_size=16,
@@ -230,6 +230,7 @@ if __name__ == "__main__":
             print(f"---- mAP {AP.mean()}")
 
             print("Running demo")
+
             demo(model, logger, epoch_n=epoch, img_size=opt.img_size)
 
         if epoch % opt.checkpoint_interval == 0:

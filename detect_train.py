@@ -25,7 +25,7 @@ from utils.logger_torch import *
 
 
 def demo(model, logger, epoch_n, path="data/samples", img_size=416,
-         class_path="data/classes.names", imag_path="bck_check/images"):
+         class_path="data/classes.names", imag_path="misc/images"):
 
     conf_thres = 0.8
     nms_thres = 0.5
