@@ -43,7 +43,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=16, help="size of the batches")
     parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
-    parser.add_argument("--destdir", type=str, default="output_json/", help="Dataset path (if ECP, the folder containing it)")
+    parser.add_argument("--destdir", type=str, default="data/detections_json/", help="Dataset path (if ECP, the folder containing it)")
 
     # ECP related
     parser.add_argument("--dataset", type=str, default="ECP", help="ECP or none")

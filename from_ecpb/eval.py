@@ -126,9 +126,9 @@ def eval(time='day', mode='val', eval_type='pedestrian', det_path=None, gt_path=
     assert mode in ['val', 'test']
 
     if gt_path is None:
-        gt_path = './data/ECP/{}/labels/{}'.format(time, mode)
+        gt_path = '../data/ECP/{}/labels/{}'.format(time, mode)
     if det_path is None:
-        det_path = './data/mock_detections/{}/{}'.format(time, mode)
+        det_path = '../data/detections_json/'.format(time, mode)
 
     det_method_name = 'Yolov3'
 
@@ -143,9 +143,10 @@ def eval(time='day', mode='val', eval_type='pedestrian', det_path=None, gt_path=
     print('Finished evaluation, results can be found here: {}'.format(results_path))
     print('# -----------------------------------------------------------------')
 
-    import matplotlib.pyplot as plt
-    plt.show()  # comment this if you don't want plots to pop up
+    # import matplotlib.pyplot as plt
+    # plt.show()  # comment this if you don't want plots to pop up
 
 
 if __name__ == "__main__":
-    eval(time='day', mode='val', eval_type='pedestrian')
+    # Model related
+    eval(time='day', mode='val', eval_type='pedestrian', det_path=None, gt_path=None)
