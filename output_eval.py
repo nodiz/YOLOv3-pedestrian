@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     print("\nPerforming object detection:")
     prev_time = time.time()
-    for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
+    for batch_i, (img_paths, input_imgs) in enumerate(tqdm.tqdm(dataloader)):
         # Configure input
         input_imgs = Variable(input_imgs.type(Tensor))
 
@@ -104,27 +104,30 @@ if __name__ == "__main__":
         imgs.extend(img_paths)
         img_detections.extend(detections)
 
-    print("\nSaving json:")
-    # Iterate through images and save plot of detections
-    for img_i, (path, detections) in enumerate(tqdm.tqdm(zip(imgs, img_detections))):
+        print("\nSaving json:")
+        # Iterate through images and save plot of detections
+        for img_i, (path, detections) in enumerate(zip(imgs, img_detections)):
 
-        # Rescale boxes to original image
-        if detections is not None:
+            # Rescale boxes to original image
+            if detections is not None:
 
-            detections = rescale_boxes(detections, opt.img_size, (1024, 1920))
-            detections_json = []
-            for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-                box = {'x0': float(x1),
-                       'x1': float(x2),
-                       'y0': float(y1),
-                       'y1': float(y2),
-                       'score': float(cls_conf.item()),
-                       'identity': 'pedestrian',
-                       'orient': 0.0}
-                detections_json.append(box)
+                detections = rescale_boxes(detections, opt.img_size, (1024, 1920))
+                detections_json = []
+                for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+                    box = {'x0': float(x1),
+                           'x1': float(x2),
+                           'y0': float(y1),
+                           'y1': float(y2),
+                           'score': float(cls_conf.item()),
+                           'identity': 'pedestrian',
+                           'orient': 0.0}
+                    detections_json.append(box)
 
-        # create json
-        destfile = os.path.join(destdir, os.path.basename(path).replace('.png', '.json'))
-        frame = {'identity': 'frame',
-                 'children': detections_json}
-        json.dump(frame, open(destfile, 'w'), indent=1)
+            # create json
+            destfile = os.path.join(destdir, os.path.basename(path).replace('.png', '.json'))
+            frame = {'identity': 'frame',
+                     'children': detections_json}
+            json.dump(frame, open(destfile, 'w'), indent=1)
+
+        imgs = []  # reset for next batch
+        img_detections = []
