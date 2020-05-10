@@ -17,6 +17,21 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torch.autograd import Variable
 
+
+def det2json(detections):
+    mock_detections = []
+    return # tbd
+    for box in detections[0][0]:
+        box = {'x0': float(box[0]),
+               'x1': float(box[2]),
+               'y0': float(box[1]),
+               'y1': float(box[3]),
+               'score': float(box[4]),
+               'identity': 'pedestrian',
+               'orient': 0.0}
+        mock_detections.append(box)
+    return mock_detections
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_def", type=str, default="config/yolov3.cfg", help="path to model definition file")
@@ -27,8 +42,10 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=16, help="size of the batches")
     parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
+    parser.add_argument("--destdir", type=str, default="output_json/", help="Dataset path (if ECP, the folder containing it)")
+
     # ECP related
-    parser.add_argument("--ECP", type=int, default=1, help="Using ECP dataset?")
+    parser.add_argument("--dataset", type=int, default="ECP", help="ECP or none")
     parser.add_argument("--data", type=str, default="data/", help="Dataset path (if ECP, the folder containing it)")
     parser.add_argument("--town", type=str, default="", help="subset town to train on (ex: to = torin+toulose")
 
@@ -36,7 +53,8 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    os.makedirs("output_labels", exist_ok=True)
+    destdir = opt.destdir
+    os.makedirs(destdir, exist_ok=True)
 
     # Set up model
     model = Darknet(opt.model_def, img_size=opt.img_size).to(device)
@@ -51,7 +69,8 @@ if __name__ == "__main__":
     model.eval()  # Set in evaluation mode
 
     dataloader = DataLoader(
-        ImageFolder(opt.image_folder, img_size=opt.img_size),  # to correct like in other loader
+        ImageFolder(opt.data, img_size=opt.img_size,
+                    dataset=opt.dataset, folder_scope="val", folder_town=opt.town),  # to correct like in other loader
         batch_size=opt.batch_size,
         shuffle=False,
         num_workers=opt.n_cpu,
@@ -74,7 +93,8 @@ if __name__ == "__main__":
         with torch.no_grad():
             detections = model(input_imgs)
             detections = non_max_suppression(detections, opt.conf_thres, opt.nms_thres)
-            print(detections) # observe detection
+            print(detections)  # observe detection
+
         # Log progress
         current_time = time.time()
         inference_time = datetime.timedelta(seconds=current_time - prev_time)
@@ -87,27 +107,26 @@ if __name__ == "__main__":
 
     print("\nSaving json:")
     # Iterate through images and save plot of detections
-    for img_i, (path, detections) in enumerate(zip(imgs, img_detections)):
+    for img_i, (path, detections) in enumerate(tqdm.tqdm(zip(imgs, img_detections))):
 
-        #create json in good place
-
-        # Draw bounding boxes and labels of detections
+        # Rescale boxes to original image
         if detections is not None:
-            # Rescale boxes to original image
-            detections = rescale_boxes(detections, opt.img_size, img.shape[:2])
-            unique_labels = detections[:, -1].cpu().unique()
-            n_cls_preds = len(unique_labels)
-            for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
 
+            detections = rescale_boxes(detections, opt.img_size, (1024, 1920))
+            detections_json = []
+            for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+                box = {'x0': x1,
+                       'x1': x2,
+                       'y0': y1,
+                       'y1': y2,
+                       'score': cls_conf.item(),
+                       'identity': 'pedestrian',
+                       'orient': 0.0}
+                detections_json.append(box)
                 print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
 
-                box_w = x2 - x1
-                box_h = y2 - y1
-
-                # Create a Rectangle bbox
-                # Add the bbox to the json
-
-
-        filename = path.split("/")[-1].split(".")[0]
-
-        # close json
+        # create json
+        destfile = os.path.join(destdir, os.path.basename(path).replace('.png', '.json'))
+        frame = {'identity': 'frame',
+                 'children': detections_json}
+        json.dump(frame, open(destfile, 'w'), indent=1)
