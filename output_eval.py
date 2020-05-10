@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torch.autograd import Variable
 
+# from from_ecpb.eval import eval
 
 def det2json(detections):
     mock_detections = []
