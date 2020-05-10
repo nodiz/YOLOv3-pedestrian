@@ -45,7 +45,7 @@ if __name__ == "__main__":
     parser.add_argument("--destdir", type=str, default="output_json/", help="Dataset path (if ECP, the folder containing it)")
 
     # ECP related
-    parser.add_argument("--dataset", type=int, default="ECP", help="ECP or none")
+    parser.add_argument("--dataset", type=str, default="ECP", help="ECP or none")
     parser.add_argument("--data", type=str, default="data/", help="Dataset path (if ECP, the folder containing it)")
     parser.add_argument("--town", type=str, default="", help="subset town to train on (ex: to = torin+toulose")
 
