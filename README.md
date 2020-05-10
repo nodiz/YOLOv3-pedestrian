@@ -4,16 +4,16 @@ A minimal PyTorch implementation of YOLOv3, with support for training, inference
 ## Installation
 ##### Clone and install requirements
 
-TODO
+Requirement are detailed in requirement.txt
 
 ##### Download pretrained weights
 
-TODO
+Pretrained weights and our model can be found there: 
+https://drive.google.com/drive/folders/1DRPNNJoIbM7utW-kDCdCFr7m4gZ0BVvo?usp=sharing
 
 ##### Download ECP 
     
-TODO add script to download
-    
+Download ECP dataset : https://eurocity-dataset.tudelft.nl after creating an account    
 ## Test
 Evaluates the model on ECP test.
 
@@ -87,6 +87,11 @@ $ tensorboard --logdir='logs' --port=6006 --host 0.0.0.0 (if from cloud)
 
 Tensorboard will instantiate a different log for every run thanks to the parameter --name.
 At every checkpoint evaluation, the images present in  the folder data/samples will be also demoed and saved in tensorboard
+
+#### Log
+
+The log file can be downloaded via this link : 
+https://drive.google.com/drive/folders/1Z9u35DOLv52WUHocVWuPC5kcMPzbaEXf?usp=sharing
 
 ## Credit
 
