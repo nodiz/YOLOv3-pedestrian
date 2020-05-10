@@ -1,7 +1,7 @@
 # PyTorch-YOLOv3
 A minimal PyTorch implementation of YOLOv3, with support for training, inference and evaluation adapted for Pedestrian detection and made compatible with the ECP Dataset (https://eurocity-dataset.tudelft.nl/eval/benchmarks/detection).
 
-![alt-text-1](https://raw.githubusercontent.com/nodiz/YOLOv3-pedestrian/master/data/assets/montpellier_00790.png?raw=true "Pisa") ![alt-text-2](https://raw.githubusercontent.com/nodiz/YOLOv3-pedestrian/master/data/assets/firenze_00022.jpeg?raw=true "Montpellier")
+![alt-text](data/assets/detection_demo.jpeg "cover") 
 
 
 ## Installation
