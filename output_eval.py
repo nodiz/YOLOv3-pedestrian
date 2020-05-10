@@ -93,7 +93,6 @@ if __name__ == "__main__":
         with torch.no_grad():
             detections = model(input_imgs)
             detections = non_max_suppression(detections, opt.conf_thres, opt.nms_thres)
-            print(detections)  # observe detection
 
         # Log progress
         current_time = time.time()
@@ -115,15 +114,14 @@ if __name__ == "__main__":
             detections = rescale_boxes(detections, opt.img_size, (1024, 1920))
             detections_json = []
             for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-                box = {'x0': x1,
-                       'x1': x2,
-                       'y0': y1,
-                       'y1': y2,
-                       'score': cls_conf.item(),
+                box = {'x0': float(x1),
+                       'x1': float(x2),
+                       'y0': float(y1),
+                       'y1': float(y2),
+                       'score': float(cls_conf.item()),
                        'identity': 'pedestrian',
                        'orient': 0.0}
                 detections_json.append(box)
-                print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
 
         # create json
         destfile = os.path.join(destdir, os.path.basename(path).replace('.png', '.json'))
