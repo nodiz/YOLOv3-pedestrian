@@ -10,7 +10,7 @@ from terminaltables import AsciiTable
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from detect_train import demo
+from detect import train_demo
 from models import *
 from test import evaluate
 from utils.datasets import *
@@ -204,7 +204,7 @@ if __name__ == "__main__":
                 model,
                 path=valid_path,
                 iou_thres=0.5,
-                conf_thres=0.95,
+                conf_thres=0.90,
                 nms_thres=0.5,
                 img_size=opt.img_size,
                 batch_size=16,
@@ -231,8 +231,10 @@ if __name__ == "__main__":
 
             print("Running demo")
 
-            demo(model, logger, epoch_n=epoch, img_size=opt.img_size)
+            # eval on images in data/samples, store detections in misc/images
+            # and load them in tensorboard for visualization
+            train_demo(model, logger, epoch_n=epoch, img_size=opt.img_size)
 
         if epoch % opt.checkpoint_interval == 0:
-            print("saving model")
+            print("Saving model")
             torch.save(model.state_dict(), f"checkpoints/yolov3_ckpt_{opt.name}_%d.pth" % epoch)
