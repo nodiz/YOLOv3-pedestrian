@@ -5,9 +5,7 @@ A minimal PyTorch implementation of YOLOv3, with support for training, inference
 
 
 ## Installation
-##### Clone and install requirements
-
-Requirement are detailed in requirement.txt
+##### Requirements
 
 This repository is mantained for:
 * Python: 3.7
@@ -27,14 +25,20 @@ Evaluates the model on ECP test.
 
 For ECP scores (LAMR for every class): 
 
-    python output_eval.py --weights_path misc/yolov3_ckpt_current_50.pth --conf_thres 0.90
-    python from_ecpb/eval.py
+    python output_eval.py --model_def config/yolov3-custom.cfg --weights_path misc/yolov3_ckpt_current_50.pth --conf_thres 0.90
+    python from_ecpb/eval.py (might require to fix some paths in eval.py)
     
 Results will be stored in from_ecpb/results
     
 For classic scores (mAP, F1, precision, recall)
      
-TODO add pipeline to readme
+    python test.py --eval_batch_lim 50 --weights_path misc/t3/yolov3_ckpt_current_50.pth
+
+## Demo 
+Demo detection on images from data/samples/ to output/
+
+     python detect.py --model_def config/yolov3-custom.cfg --weights_path bck_check/t1/yolov3_ckpt_30.pth
+
 
 ## Train
 ```
