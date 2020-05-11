@@ -53,10 +53,10 @@ def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size
     # Concatenate sample statistics
     try:
         true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*sample_metrics))]
+        precision, recall, AP, f1, ap_class = ap_per_class(true_positives, pred_scores, pred_labels, labels)
     except ValueError:
         print("batch skipped, no statistics")
-
-    precision, recall, AP, f1, ap_class = ap_per_class(true_positives, pred_scores, pred_labels, labels)
+        precision, recall, AP, f1, ap_class = None, None, None, None, None
 
     return precision, recall, AP, f1, ap_class
 
@@ -112,9 +112,9 @@ if __name__ == "__main__":
         ecp=opt.ECP,
         batch_lim=opt.eval_batch_lim
     )
+    if precision is not None:
+        print("Average Precisions:")
+        for i, c in enumerate(ap_class):
+            print(f"+ Class '{c}' ({class_names[c]}) - AP: {AP[i]}")
 
-    print("Average Precisions:")
-    for i, c in enumerate(ap_class):
-        print(f"+ Class '{c}' ({class_names[c]}) - AP: {AP[i]}")
-
-    print(f"mAP: {AP.mean()}")
+        print(f"mAP: {AP.mean()}")
