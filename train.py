@@ -231,8 +231,10 @@ if __name__ == "__main__":
 
             print("Running demo")
 
+            # eval on images in data/samples, store detections in misc/images
+            # and load them in tensorboard for visualization
             train_demo(model, logger, epoch_n=epoch, img_size=opt.img_size)
 
         if epoch % opt.checkpoint_interval == 0:
-            print("saving model")
+            print("Saving model")
             torch.save(model.state_dict(), f"checkpoints/yolov3_ckpt_{opt.name}_%d.pth" % epoch)

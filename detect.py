@@ -23,20 +23,21 @@ from matplotlib.ticker import NullLocator
 
 import numpy as np
 
-from utils.logger_torch import *
+# from utils.logger_torch import *
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--image_folder", type=str, default="data/samples", help="path to dataset")
-    parser.add_argument("--model_def", type=str, default="config/yolov3.cfg", help="path to model definition file")
-    parser.add_argument("--weights_path", type=str, default="weights/yolov3.weights", help="path to weights file")
-    parser.add_argument("--class_path", type=str, default="data/coco.names", help="path to class label file")
-    parser.add_argument("--conf_thres", type=float, default=0.8, help="object confidence threshold")
-    parser.add_argument("--nms_thres", type=float, default=0.4, help="iou thresshold for non-maximum suppression")
+    parser.add_argument("--model_def", type=str, default="config/yolov3-custom.cfg", help="path to model definition file")
+    parser.add_argument("--weights_path", type=str, default="checkpoints/yolov3_ckpt_current_50.pth", help="path to weights file")
+    parser.add_argument("--class_path", type=str, default="data/classes.names", help="path to class label file")
+    parser.add_argument("--conf_thres", type=float, default=0.90, help="object confidence threshold")
+    parser.add_argument("--nms_thres", type=float, default=0.35, help="iou threshold for non-maximum suppression")
     parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
     parser.add_argument("--n_cpu", type=int, default=0, help="number of cpu threads to use during batch generation")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
     parser.add_argument("--checkpoint_model", type=str, help="path to checkpoint model")
+
     opt = parser.parse_args()
     print(opt)
 
@@ -52,7 +53,7 @@ if __name__ == "__main__":
         model.load_darknet_weights(opt.weights_path)
     else:
         # Load checkpoint weights
-        model.load_state_dict(torch.load(opt.weights_path))
+        model.load_state_dict(torch.load(opt.weights_path, map_location=device))
 
     model.eval()  # Set in evaluation mode
 
@@ -123,18 +124,18 @@ if __name__ == "__main__":
 
                 color = bbox_colors[int(np.where(unique_labels == int(cls_pred))[0])]
                 # Create a Rectangle patch
-                bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=2, edgecolor=color, facecolor="none")
+                bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=1, edgecolor=color, facecolor="none")
                 # Add the bbox to the plot
                 ax.add_patch(bbox)
                 # Add label
-                plt.text(
+                """plt.text(
                     x1,
                     y1,
                     s=classes[int(cls_pred)],
                     color="white",
                     verticalalignment="top",
                     bbox={"color": color, "pad": 0},
-                )
+                )"""
 
         # Save generated image with detections
         plt.axis("off")
@@ -148,7 +149,7 @@ if __name__ == "__main__":
 def train_demo(model, logger, epoch_n, path="data/samples", img_size=416,
          class_path="data/classes.names", imag_path="misc/images"):
 
-    conf_thres = 0.8
+    conf_thres = 0.95
     nms_thres = 0.5
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
