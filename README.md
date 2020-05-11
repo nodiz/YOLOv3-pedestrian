@@ -26,7 +26,7 @@ Evaluates the model on ECP test.
 For ECP scores (LAMR for every class): 
 
     python output_eval.py --model_def config/yolov3-custom.cfg --weights_path misc/yolov3_ckpt_current_50.pth --conf_thres 0.90
-    python from_ecpb/eval.py (might require to fix some paths in eval.py)
+    python from_ecpb/eval.py
     
 Results will be stored in from_ecpb/results
     
