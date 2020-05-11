@@ -51,7 +51,11 @@ def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size
         sample_metrics += get_batch_statistics(outputs, targets, iou_threshold=iou_thres)
 
     # Concatenate sample statistics
-    true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*sample_metrics))]
+    try:
+        true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*sample_metrics))]
+    except ValueError:
+        print("batch skipped, no statistics")
+
     precision, recall, AP, f1, ap_class = ap_per_class(true_positives, pred_scores, pred_labels, labels)
 
     return precision, recall, AP, f1, ap_class
@@ -59,13 +63,13 @@ def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--batch_size", type=int, default=8, help="size of each image batch")
+    parser.add_argument("--batch_size", type=int, default=16, help="size of each image batch")
     parser.add_argument("--model_def", type=str, default="config/yolov3-custom.cfg", help="path to model def file")
     parser.add_argument("--data_config", type=str, default="config/custom.data", help="path to data config file")
     parser.add_argument("--weights_path", type=str, default="weights/yolov3.weights", help="path to weights file")
     parser.add_argument("--class_path", type=str, default="data/classes.names", help="path to class label file")
     parser.add_argument("--iou_thres", type=float, default=0.5, help="iou threshold required to qualify as detected")
-    parser.add_argument("--conf_thres", type=float, default=0.93, help="object confidence threshold")
+    parser.add_argument("--conf_thres", type=float, default=0.90, help="object confidence threshold")
     parser.add_argument("--nms_thres", type=float, default=0.35, help="iou thresshold for non-maximum suppression")
     parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
@@ -92,7 +96,7 @@ if __name__ == "__main__":
         model.load_darknet_weights(opt.weights_path)
     else:
         # Load checkpoint weights
-        model.load_state_dict(torch.load(opt.weights_path))
+        model.load_state_dict(torch.load(opt.weights_path, map_location=device))
 
     print("Compute mAP...")
 
@@ -100,10 +104,10 @@ if __name__ == "__main__":
         model,
         path=valid_path,
         iou_thres=0.5,
-        conf_thres=0.95,
-        nms_thres=0.5,
+        conf_thres=opt.conf_thres,
+        nms_thres=opt.nms_thres,
         img_size=opt.img_size,
-        batch_size=16,
+        batch_size=opt.batch_size,
         town=opt.town,
         ecp=opt.ECP,
         batch_lim=opt.eval_batch_lim

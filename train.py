@@ -204,7 +204,7 @@ if __name__ == "__main__":
                 model,
                 path=valid_path,
                 iou_thres=0.5,
-                conf_thres=0.95,
+                conf_thres=0.90,
                 nms_thres=0.5,
                 img_size=opt.img_size,
                 batch_size=16,
