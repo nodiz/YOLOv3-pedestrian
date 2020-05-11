@@ -10,7 +10,7 @@ from terminaltables import AsciiTable
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from detect_train import demo
+from detect import train_demo
 from models import *
 from test import evaluate
 from utils.datasets import *
@@ -231,7 +231,7 @@ if __name__ == "__main__":
 
             print("Running demo")
 
-            demo(model, logger, epoch_n=epoch, img_size=opt.img_size)
+            train_demo(model, logger, epoch_n=epoch, img_size=opt.img_size)
 
         if epoch % opt.checkpoint_interval == 0:
             print("saving model")
