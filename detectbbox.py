@@ -155,7 +155,7 @@ if __name__ == "__main__":
                 plt.gca().xaxis.set_major_locator(NullLocator())
                 plt.gca().yaxis.set_major_locator(NullLocator())
                 filename = path.split("/")[-1].split(".")[0]+ "- pedestrian" + str(i)
-                plt.savefig(f"output/{filename}.png")
+                plt.savefig(f"output/{filename}.jpg")
                 plt.close()
             f.close()
 
