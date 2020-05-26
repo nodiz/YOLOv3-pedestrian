@@ -114,6 +114,10 @@ if __name__ == "__main__":
             n_cls_preds = len(unique_labels)
             bbox_colors = random.sample(colors, n_cls_preds)
             i = 0
+            People = np.array([])
+            filename = "output/" + path.split("/")[-1].split(".")[0]
+            f = open(filename, "w")
+
             for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
                 i = i+1
                 print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
@@ -138,6 +142,9 @@ if __name__ == "__main__":
 
                 pedestrian = img[int(y1):int(y2), int(x1):int(x2), :]
 
+                f.write(str(i)+" "+str(x1.item())+" "+str(x2.item())+" "+str(y1.item())+" "+str(y2.item()) + "\n")
+                People = np.append(People, [i, x1, x2, y1, y2])
+
                 plt.figure()
                 fig, ax = plt.subplots(1)
 
@@ -150,6 +157,8 @@ if __name__ == "__main__":
                 filename = path.split("/")[-1].split(".")[0]+ "- pedestrian" + str(i)
                 plt.savefig(f"output/{filename}.png")
                 plt.close()
+            f.close()
+
 
 
 def train_demo(model, logger, epoch_n, path="data/samples", img_size=416,
