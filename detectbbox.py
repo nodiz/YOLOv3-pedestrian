@@ -17,6 +17,10 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torch.autograd import Variable
 
+import matplotlib
+
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.ticker import NullLocator
@@ -28,8 +32,10 @@ import numpy as np
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--image_folder", type=str, default="data/samples", help="path to dataset")
-    parser.add_argument("--model_def", type=str, default="config/yolov3-custom.cfg", help="path to model definition file")
-    parser.add_argument("--weights_path", type=str, default="checkpoints/yolov3_ckpt_current_50.pth", help="path to weights file")
+    parser.add_argument("--model_def", type=str, default="config/yolov3-custom.cfg",
+                        help="path to model definition file")
+    parser.add_argument("--weights_path", type=str, default="checkpoints/yolov3_ckpt_current_50.pth",
+                        help="path to weights file")
     parser.add_argument("--class_path", type=str, default="data/classes.names", help="path to class label file")
     parser.add_argument("--conf_thres", type=float, default=0.90, help="object confidence threshold")
     parser.add_argument("--nms_thres", type=float, default=0.35, help="iou threshold for non-maximum suppression")
@@ -116,11 +122,12 @@ if __name__ == "__main__":
             bbox_colors = random.sample(colors, n_cls_preds)
             i = 0
             People = np.array([])
-            filename = opt.output_dir + path.split("/")[-1].split(".")[0]
-            f = open(filename+'.txt', "w")
+            filename = opt.output_dir + "/" + path.split("/")[-1].split(".")[0]
+            print('FILENAME', filename)
+            f = open(filename + '.txt', "w")
 
             for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-                i = i+1
+                i = i + 1
                 print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
 
                 box_w = x2 - x1
@@ -128,9 +135,9 @@ if __name__ == "__main__":
 
                 color = bbox_colors[int(np.where(unique_labels == int(cls_pred))[0])]
                 # Create a Rectangle patch
-                #bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=1, edgecolor=color, facecolor="none")
+                # bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=1, edgecolor=color, facecolor="none")
                 # Add the bbox to the plot
-                #ax.add_patch(bbox)
+                # ax.add_patch(bbox)
                 # Add label
                 """plt.text(
                     x1,
@@ -143,28 +150,29 @@ if __name__ == "__main__":
 
                 pedestrian = img[int(y1):int(y2), int(x1):int(x2), :]
 
-                f.write(str(i)+" "+str(x1.item())+" "+str(x2.item())+" "+str(y1.item())+" "+str(y2.item()) + "\n")
-                People = np.append(People, [i, x1, x2, y1, y2])
+                # pedestrian not saved if not totaly on the frame
+                if pedestrian.shape[0] != 0 and pedestrian.shape[1] != 0:
+                    f.write(str(i) + " " + str(x1.item()) + " " + str(x2.item()) + " " + str(y1.item()) + " " + str(
+                        y2.item()) + "\n")
+                    People = np.append(People, [i, x1, x2, y1, y2])
 
-                plt.figure()
-                fig, ax = plt.subplots(1)
+                    plt.figure()
+                    fig, ax = plt.subplots(1)
 
-                ax.imshow(pedestrian)
+                    ax.imshow(pedestrian)
 
-                # Save generated image with detections
-                plt.axis("off")
-                plt.gca().xaxis.set_major_locator(NullLocator())
-                plt.gca().yaxis.set_major_locator(NullLocator())
-                filename = path.split("/")[-1].split(".")[0]+ "- pedestrian" + str(i)
-                plt.savefig(f"{opt.output_dir}/{filename}.jpg")
-                plt.close()
+                    # Save generated image with detections
+                    plt.axis("off")
+                    plt.gca().xaxis.set_major_locator(NullLocator())
+                    plt.gca().yaxis.set_major_locator(NullLocator())
+                    filename = path.split("/")[-1].split(".")[0] + "- pedestrian" + str(i)
+                    plt.savefig(f"{opt.output_dir}/{filename}.jpg")
+                    plt.close()
             f.close()
 
 
-
 def train_demo(model, logger, epoch_n, path="data/samples", img_size=416,
-         class_path="data/classes.names", imag_path="misc/images"):
-
+               class_path="data/classes.names", imag_path="misc/images"):
     conf_thres = 0.95
     nms_thres = 0.5
 
@@ -229,7 +237,6 @@ def train_demo(model, logger, epoch_n, path="data/samples", img_size=416,
             n_cls_preds = len(unique_labels)
             bbox_colors = random.sample(colors, n_cls_preds)
             for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-
                 box_w = x2 - x1
                 box_h = y2 - y1
 
