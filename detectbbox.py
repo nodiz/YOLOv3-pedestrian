@@ -116,7 +116,7 @@ if __name__ == "__main__":
             bbox_colors = random.sample(colors, n_cls_preds)
             i = 0
             People = np.array([])
-            filename = "output/" + path.split("/")[-1].split(".")[0]
+            filename = opt.output_dir + path.split("/")[-1].split(".")[0]
             f = open(filename+'.txt', "w")
 
             for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
@@ -156,7 +156,7 @@ if __name__ == "__main__":
                 plt.gca().xaxis.set_major_locator(NullLocator())
                 plt.gca().yaxis.set_major_locator(NullLocator())
                 filename = path.split("/")[-1].split(".")[0]+ "- pedestrian" + str(i)
-                plt.savefig(f"output/{filename}.jpg")
+                plt.savefig(f"{opt.output_dir}/{filename}.jpg")
                 plt.close()
             f.close()
 
