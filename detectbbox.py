@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", type=str, default="output", help="path to checkpoint model")
 
     opt = parser.parse_args()
-    print(opt)
+    #print(opt)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         current_time = time.time()
         inference_time = datetime.timedelta(seconds=current_time - prev_time)
         prev_time = current_time
-        print("\t+ Batch %d, Inference Time: %s" % (batch_i, inference_time))
+        #print("\t+ Batch %d, Inference Time: %s" % (batch_i, inference_time))
 
         # Save image and detections
         imgs.extend(img_paths)
@@ -111,7 +111,6 @@ if __name__ == "__main__":
 
         # Create plot
         img = np.array(Image.open(path))
-        print(img.shape)
 
         # Draw bounding boxes and labels of detections
         if detections is not None:
@@ -123,12 +122,11 @@ if __name__ == "__main__":
             i = 0
             People = np.array([])
             filename = opt.output_dir + "/" + path.split("/")[-1].split(".")[0]
-            print('FILENAME', filename)
             f = open(filename + '.txt', "w")
 
             for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
                 i = i + 1
-                print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
+                #print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
 
                 box_w = x2 - x1
                 box_h = y2 - y1
