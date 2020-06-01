@@ -131,7 +131,7 @@ if __name__ == "__main__":
                 box_w = x2 - x1
                 box_h = y2 - y1
                 
-                if box_w < 0.3*box_h:
+                if box_w < 0.45*box_h:
                     i = i + 1
                     color = bbox_colors[int(np.where(unique_labels == int(cls_pred))[0])]
                     # Create a Rectangle patch
