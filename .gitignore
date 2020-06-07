@@ -14,3 +14,4 @@ data/ECP
 weights/
 logs/
 .idea/
+venv/
