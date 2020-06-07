@@ -1,0 +1,2 @@
+# TODO: You should add a few tests that you run all at once with pytest so that if you make breaking changes in your code,
+# you see it in your tests. Best are unittests but end to end tests should still be a nice first step !
