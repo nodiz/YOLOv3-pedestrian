@@ -2,22 +2,18 @@ from __future__ import division
 
 import argparse
 import datetime
-import os
 import time
 
 import torch
 from terminaltables import AsciiTable
 from torch.autograd import Variable
-from torch.utils.data import DataLoader
 
-from detect import train_demo
-from models import *
-from test import evaluate
-from utils.datasets import *
-from utils.parse_config import *
-from utils.utils import *
+from detlib.detect import train_demo
+from detlib.models import *
+from detlib.train.test import evaluate
+from detlib.utils.datasets import *
 
-from utils.scheduler_warmup import GradualWarmupScheduler
+from detlib.utils import GradualWarmupScheduler
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 if __name__ == "__main__":
@@ -55,7 +51,6 @@ if __name__ == "__main__":
 
     if opt.logger:
         # Logger require to instance Tensorflow, we import it only if needed
-        from utils.logger_torch import *
         logger = Logger("logs/", opt.logger, opt.name)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -71,7 +66,7 @@ if __name__ == "__main__":
         train_path = data_config["train"]
         valid_path = data_config["valid"]
     else:
-        train_path = "train"
+        train_path = ""
         valid_path = "val"
 
     class_names = load_classes(data_config["names"])

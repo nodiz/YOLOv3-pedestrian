@@ -3,14 +3,9 @@ from __future__ import division
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 import numpy as np
 
-from utils.parse_config import *
-from utils.utils import build_targets, to_cpu, non_max_suppression
-
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
+from detlib.utils import build_targets, to_cpu
 
 
 def create_modules(module_defs):

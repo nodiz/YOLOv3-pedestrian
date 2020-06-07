@@ -123,7 +123,7 @@ def main():
     pkl_file = './results/ignore=True_difficulty=reasonable.pkl'  # edit
 
     # The folders which contains the ecp dataset (especially the "day" and "night" folders).
-    data_path = './data'  # edit
+    data_path = 'data'  # edit
 
     # Place to start looking for results.
     out_path = './qualitative_eval/'  # edit

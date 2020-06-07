@@ -1,11 +1,9 @@
 from __future__ import division
 
-from models import *
-from utils.utils import *
-from utils.datasets import *
+from detlib.models import *
+from detlib.utils.datasets import *
 
 import os
-import sys
 import time
 import datetime
 import argparse
@@ -14,7 +12,6 @@ import json
 
 import torch
 from torch.utils.data import DataLoader
-from torchvision import datasets
 from torch.autograd import Variable
 
 # from from_ecpb.eval import eval

@@ -5,6 +5,16 @@ A minimal PyTorch implementation of YOLOv3, with support for training, inference
 
 
 ## Installation
+
+The whole install process should be:
+```bash
+virtualenv venv -p python3.7
+source venv/bin/activate
+pip install -r requirements.txt
+
+./scripts/download_weights.sh (if necessary)
+```
+
 ##### Requirements
 
 This repository is mantained for:

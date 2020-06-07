@@ -1,4 +1,4 @@
-from utils import CompareRectangles
+from detlib.utils import CompareRectangles
 
 
 class ParamsFactory:

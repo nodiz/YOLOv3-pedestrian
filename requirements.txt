@@ -1,9 +1,14 @@
-numpy
-torch>=1.0
-torchvision
-matplotlib
-tensorflow
-tensorboard
-terminaltables
-pillow
-tqdm
+#
+# Developer requirements file
+#
+-e .
+
+coverage
+pytest
+pytest-cov
+pylint
+pylint-quotes
+
+# Could be useful to lint  and test your code
+# (pylint --load-plugins pylint_quotes detlib)
+
