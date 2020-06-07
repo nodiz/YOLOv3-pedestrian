@@ -9,8 +9,7 @@ from terminaltables import AsciiTable
 from torch.autograd import Variable
 
 from detlib.detect import train_demo
-from detlib.models import *
-from detlib.train.test import evaluate
+from detlib.eval.test import evaluate
 from detlib.utils.datasets import *
 
 from detlib.utils import GradualWarmupScheduler
